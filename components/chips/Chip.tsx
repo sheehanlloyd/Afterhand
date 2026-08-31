@@ -1,6 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import type { PanInfo } from "framer-motion";
+import { dropTargetAt, useChipDrag, useDragGuard } from "./chip-drag";
 import { cn } from "@/lib/utils/cn";
 
 export interface ChipStyle {
@@ -80,34 +82,98 @@ export function ChipFace({
   );
 }
 
+/** Movement past this many pixels means the player meant to drag, not tap. */
+const DRAG_SLOP = 12;
+
+/**
+ * Framer reports the pointer in page space. The table never scrolls the window,
+ * so this is a no-op there, but subtracting the scroll offset keeps the hit test
+ * correct if a draggable chip is ever used on a scrolling page.
+ */
+function targetUnder(info: PanInfo): string | null {
+  return dropTargetAt(info.point.x - window.scrollX, info.point.y - window.scrollY);
+}
+
+/**
+ * A chip in the rail.
+ *
+ * It can be tapped, which is the fast way to build a bet, or picked up and
+ * dropped on the bet spot, which is how you do it at a table. Both end in the
+ * same place. The drag is the reason the felt has a drop target at all, and on
+ * a phone it turns a lot of empty green into something you can aim at.
+ */
 export function Chip({
   value,
   onClick,
   disabled,
   selected,
   className,
+  draggable = false,
+  onDrop,
 }: {
   value: number;
   onClick?: () => void;
   disabled?: boolean;
   selected?: boolean;
   className?: string;
+  /** Allows the chip to be dragged onto a bet spot as well as tapped. */
+  draggable?: boolean;
+  /** Called with the drop target id when the chip lands on one. */
+  onDrop?: (target: string) => void;
 }) {
   const reduced = useReducedMotion();
+  const { setDragging, setOver } = useChipDrag();
+  const { markDragged, consume } = useDragGuard();
+
+  const canDrag = draggable && !disabled && !reduced;
+
+  const dragProps = canDrag
+    ? {
+        drag: true as const,
+        dragSnapToOrigin: true,
+        dragMomentum: false,
+        dragElastic: 0.9,
+        whileDrag: { scale: 1.16, zIndex: 50 },
+        onDragStart: () => setDragging(true),
+        onDrag: (_: unknown, info: PanInfo) => {
+          // Only a deliberate movement counts as a drag. Framer starts the
+          // gesture after a few pixels, and treating that as a drag would let a
+          // slightly shaky tap fall through without placing a bet.
+          if (Math.hypot(info.offset.x, info.offset.y) > DRAG_SLOP) markDragged();
+          setOver(targetUnder(info));
+        },
+        onDragEnd: (_: unknown, info: PanInfo) => {
+          const target = targetUnder(info);
+          setDragging(false);
+          setOver(null);
+          if (target === null) return;
+          if (onDrop) onDrop(target);
+          else onClick?.();
+        },
+      }
+    : {};
+
   return (
     <motion.button
       type="button"
       disabled={disabled}
-      onClick={onClick}
+      // A chip that was dragged has already been dealt with on release, so the
+      // trailing click the browser fires afterwards must not bet a second time.
+      onClick={() => {
+        if (consume()) return;
+        onClick?.();
+      }}
       aria-label={`Add $${value} to your bet`}
       whileHover={disabled || reduced ? undefined : { y: -5 }}
       whileTap={disabled || reduced ? undefined : { y: -1, scale: 0.97 }}
       transition={{ type: "spring", stiffness: 420, damping: 26 }}
       className={cn(
         "relative rounded-full transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-35",
+        canDrag && "cursor-grab active:cursor-grabbing",
         selected && "ring-2 ring-brass-500/80 ring-offset-2 ring-offset-felt-800",
         className,
       )}
+      {...dragProps}
     >
       <ChipFace value={value} />
     </motion.button>
