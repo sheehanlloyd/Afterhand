@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { HeroTable } from "@/components/marketing/HeroTable";
+import { TableFilm } from "@/components/marketing/TableFilm";
+import { FilmGallery } from "@/components/marketing/FilmGallery";
+import { FILMS } from "@/lib/content/films";
 import { GameCard } from "@/components/marketing/GameCard";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { SectionHead } from "@/components/ui/Panel";
@@ -77,7 +79,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <HeroTable />
+          <TableFilm script={FILMS.blackjack} />
         </div>
       </section>
 
@@ -98,10 +100,22 @@ export default function HomePage() {
       </section>
 
       <section
+        aria-labelledby="film-heading"
+        className="mx-auto w-full max-w-[var(--shell-max)] px-5 pb-20 sm:px-8 sm:pb-28"
+      >
+        <SectionHead
+          index="02"
+          title={<span id="film-heading">Watch a hand</span>}
+          note="Each table plays a hand through to the review, so you can see how a session reads before you sit down."
+        />
+        <FilmGallery className="mt-10" />
+      </section>
+
+      <section
         aria-labelledby="how-heading"
         className="mx-auto w-full max-w-[var(--shell-max)] px-5 pb-20 sm:px-8 sm:pb-28"
       >
-        <SectionHead index="02" title={<span id="how-heading">How it works</span>} />
+        <SectionHead index="03" title={<span id="how-heading">How it works</span>} />
         <ol className="mt-10 grid gap-x-10 gap-y-10 sm:grid-cols-3">
           {STEPS.map((step, index) => (
             <li key={step.title} className="border-t border-fg pt-5">
@@ -114,7 +128,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto w-full max-w-[var(--shell-max)] px-5 pb-20 sm:px-8 sm:pb-28">
-        <SectionHead index="03" title="Why after" />
+        <SectionHead index="04" title="Why after" />
         <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-16">
           <blockquote className="display text-[clamp(1.5rem,3.4vw,2.3rem)] leading-[1.2]">
             A coach who talks during the hand is not teaching you. They are playing for you.
