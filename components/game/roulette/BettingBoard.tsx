@@ -83,7 +83,17 @@ export function BettingBoard({
   const zeroPockets: Pocket[] = variant === "american" ? [0, "00"] : [0];
 
   return (
-    <div className="w-full overflow-x-auto pb-2">
+    /* The layout is wider than a phone. It scrolls, and the mask on the trailing
+       edge is what tells you so, since there is no scrollbar on touch. */
+    <div
+      className="w-full overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1"
+      style={{
+        WebkitMaskImage:
+          "linear-gradient(to right, transparent 0, #000 10px, #000 calc(100% - 18px), transparent 100%)",
+        maskImage:
+          "linear-gradient(to right, transparent 0, #000 10px, #000 calc(100% - 18px), transparent 100%)",
+      }}
+    >
       <div className="min-w-[32rem] max-w-3xl sm:mx-auto">
         <div className="flex gap-1">
           {/* Zero column */}

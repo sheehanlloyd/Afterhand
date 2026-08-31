@@ -19,7 +19,14 @@ export function Logo({
   return (
     <Link
       href={href}
-      className={cn("group inline-flex items-baseline gap-2.5", className)}
+      className={cn(
+        "group relative inline-flex items-baseline gap-2.5",
+        /* On a phone the wordmark is hidden and only the 22px plaque is left,
+           which is under the comfortable touch size. This widens the hit area
+           to 46px square without moving anything on screen. */
+        "after:absolute after:-inset-x-3 after:-inset-y-3 after:content-['']",
+        className,
+      )}
       aria-label="Afterhand home"
     >
       <span

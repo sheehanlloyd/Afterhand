@@ -1,11 +1,24 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BlackjackState } from "@/lib/games/blackjack/types";
 import { labelForHand } from "@/lib/games/blackjack/engine";
 import { CardRow, PlayerHand, TotalPlate } from "./HandDisplay";
 import { CHIP_DENOMINATIONS } from "./Rails";
 import { cardsRemaining } from "@/lib/games/deck";
+
+/**
+ * Cards shrink as the hand count grows. Four split hands of three cards each
+ * will not fit across a phone at the single hand size, so the table reflows
+ * rather than letting the outer hands fall off the felt.
+ */
+const CARD_WIDTH_BY_HANDS: Record<number, string> = {
+  1: "clamp(3.1rem, 10vw, 5.3rem)",
+  2: "clamp(2.7rem, 8.5vw, 4.6rem)",
+  3: "clamp(2.3rem, 7vw, 4rem)",
+  4: "clamp(2rem, 6vw, 3.5rem)",
+};
 
 export function BlackjackTable({
   game,
@@ -22,6 +35,14 @@ export function BlackjackTable({
   const dealing = game.hands.length > 0;
   const remaining = cardsRemaining(game.shoe);
   const decksLeft = Math.max(0, remaining / 52);
+  const handCount = Math.max(1, game.hands.length);
+  const playerCardWidth = CARD_WIDTH_BY_HANDS[Math.min(handCount, 4)] ?? CARD_WIDTH_BY_HANDS[4];
+
+  /* Keep whichever hand is being played in view when the row has to scroll. */
+  const activeRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [game.activeHandIndex, game.hands.length]);
 
   return (
     <div className="felt relative flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -74,7 +95,12 @@ export function BlackjackTable({
         </div>
 
         {/* Player */}
-        <div className="flex w-full shrink-0 items-end justify-center gap-6 sm:gap-10">
+        <div
+          className={
+            "flex w-full shrink-0 items-end justify-center gap-3 overflow-x-auto " +
+            "px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-10"
+          }
+        >
           {dealing ? (
             game.hands.map((hand, index) => {
               const active =
@@ -82,7 +108,9 @@ export function BlackjackTable({
               return (
                 <div
                   key={hand.id}
-                  className="[--card-w:clamp(3.1rem,10vw,5.3rem)]"
+                  ref={active ? activeRef : undefined}
+                  className="shrink-0"
+                  style={{ ["--card-w" as string]: playerCardWidth }}
                 >
                   <PlayerHand
                     cards={hand.cards}

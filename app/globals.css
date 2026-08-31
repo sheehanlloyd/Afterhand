@@ -117,6 +117,32 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* iOS Safari otherwise inflates type in landscape. */
+    text-size-adjust: 100%;
+  }
+
+  /* Touch behaviour.
+
+     Mobile Safari and Chrome paint a grey block over anything tappable and wait
+     to see whether a tap is really a double tap to zoom. On a table where the
+     controls are pressed quickly and repeatedly, both read as lag. Focus styles
+     are untouched, so keyboard users lose nothing. */
+  button,
+  a,
+  [role="button"],
+  [role="tab"],
+  label,
+  input,
+  select {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* A dragged finger on the felt should not select the dealer's dialogue. */
+  .felt,
+  .felt * {
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   body {
@@ -159,6 +185,14 @@
 
   h1, h2, h3, h4 {
     text-wrap: balance;
+  }
+
+  /* The site header is sticky, so anything jumped to by anchor needs to clear it. */
+  :target,
+  h1, h2, h3, h4,
+  section[id],
+  [id] {
+    scroll-margin-top: 5rem;
   }
 
   input[type="number"]::-webkit-outer-spin-button,
