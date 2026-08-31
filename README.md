@@ -22,6 +22,8 @@ so in as many words.
 - **Real rules.** Six deck shoe, dealer soft 17 behaviour, splits, double after split, late
   surrender, insurance, side pots in poker, correct baccarat third card rules, both roulette wheels.
 - **No money.** No accounts, no deposits, no withdrawals, no chips to buy, no ads.
+- **Table films.** Each game plays a scripted hand of itself on the homepage, through to the
+  review, using the same card and chip components as the real tables.
 
 ## Supported games
 
@@ -89,6 +91,68 @@ The project deploys to Vercel with no configuration. Import the repository, keep
 deploy. Everything is statically prerendered and all game logic runs in the browser, so there is
 nothing to provision.
 
+Every route in the build is marked `○ (Static)`. There are no API routes, no server actions, no
+image optimisation, and deliberately no middleware, so a page view costs bandwidth and nothing
+else.
+
+### Running costs
+
+The expensive things on Vercel are function invocations, image optimisation, and bandwidth. This
+project avoids the first two entirely and keeps the third small.
+
+What the repository already does:
+
+- **No middleware.** Middleware runs as a function on every matched request. On an otherwise
+  static site it would turn every page view into a billed invocation. Security headers are set in
+  `next.config.ts` instead, where the CDN applies them for free.
+- **No `next/image`.** Optimised images are billed per source image. The cards, chips, wheel, and
+  icons are all drawn in CSS, so the site ships no raster assets at all.
+- **No video files.** The table films are scripted frames rendered by components that have already
+  loaded, not media downloads. A single short clip would outweigh the rest of the site.
+- **Fonts self-hosted at build** through `next/font`, so there is no third party request.
+- **Scoped link prefetching.** Next prefetches every `<Link>` in the viewport by default. The
+  footer alone would have fired nine speculative requests on every page view. Prefetch is now
+  limited to primary actions.
+- **Long lived caching** on the generated icons, manifest, Open Graph card, robots, and sitemap,
+  which previously revalidated on every request.
+
+What to set once in the Vercel dashboard, which cannot be done from the repository:
+
+1. **Spend management.** Project settings, Usage, set a spend limit and an alert threshold. This is
+   the only hard ceiling on a bill.
+2. **Firewall rate limiting.** Project settings, Firewall. A rule such as 200 requests per minute
+   per IP across `/.*` is far above real use and stops a scraper from running up transfer costs.
+   There is no application level rate limiting in the code because there is no endpoint to limit:
+   nothing here reaches a server.
+3. **Attack Challenge Mode**, in the same panel, if the site is ever targeted.
+
+### Domain
+
+`metadataBase`, the sitemap, and the canonical tags all use the apex, `https://afterhand.online`.
+The deployment currently redirects the apex to `www.afterhand.online`, so those canonical URLs
+resolve through a redirect. Set the apex as the primary domain under Project settings, Domains, so
+the canonical host and the served host agree. If you would rather keep `www` as primary, change
+`siteUrl` in `app/layout.tsx` and `BASE` in `app/sitemap.ts` to match.
+
+## Browser and device support
+
+Tested on current Chrome, Safari, Edge, and Firefox, and on iOS Safari and Android Chrome.
+
+Mobile specifics worth knowing:
+
+- Layout heights use `dvh` rather than `vh`, so the collapsing iOS Safari toolbar does not crop the
+  control rail.
+- `viewport-fit=cover` plus `env(safe-area-inset-*)` keeps the rails clear of the home indicator
+  and the notch.
+- The theme colour follows the surface, so the browser chrome goes dark when you sit down at a
+  table and light again when you leave.
+- Blackjack card sizes scale with the number of split hands, so four hands still fit across a
+  375px screen, and the row scrolls the active hand into view if it ever cannot.
+- The roulette layout is wider than a phone by design. It scrolls horizontally with a masked edge
+  to show there is more.
+- Tap highlight and double tap zoom are suppressed on controls so repeated presses at a table do
+  not read as lag.
+
 ## Project structure
 
 ```
@@ -101,13 +165,13 @@ components/
   review/               Post-hand review panels
   layout/               Site header, footer, and surface switching
   rules/                Rules rendering
-  marketing/            Homepage and game selection pieces
+  marketing/            Homepage pieces, game cards, and the table films
 lib/
   games/                Rules engines: blackjack, poker, baccarat, roulette
   strategy/             Blackjack basic strategy, probability, and coaching
   storage/              Versioned localStorage and sessionStorage helpers
   store/                Session state
-  content/              Rules text, tutorials, glossary, game catalogue
+  content/              Rules text, tutorials, glossary, game catalogue, film scripts
 tests/                  Vitest suites for the engines
 types/                  Shared card and game types
 ```
