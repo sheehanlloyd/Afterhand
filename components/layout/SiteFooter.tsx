@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const GITHUB_URL = "https://github.com/sheehanlloyd/afterhand";
+const GITHUB_URL = "https://github.com/sheehanlloyd/Afterhand";
 
 const COLUMNS = [
   {

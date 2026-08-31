@@ -2,74 +2,90 @@
 
 **Play first. Understand after.**
 
-Afterhand is an educational casino strategy simulator. You play a real hand with real rules and
-simulated money, and the coaching arrives only once the hand is over. During the hand you are on
-your own, which is the point: the decision has to be yours before the explanation means anything.
+Afterhand is a casino strategy simulator. You play a real hand with real rules and simulated
+money, and the coaching only shows up once the hand is over. While the hand is live you are on your
+own, which is the whole point. The decision has to be yours before the explanation is worth
+anything.
 
 Live at [afterhand.online](https://afterhand.online).
 
 ---
 
-## What it does
+## The idea
 
-Afterhand keeps two ideas apart that casinos blur together: whether a decision was correct, and
-whether it worked. A correct play that lost the hand is still marked correct, and the review says
-so in as many words.
+Most trainers tell you the right move while you are still deciding. That is not teaching, it is
+playing the hand for you. You end up clicking whatever is highlighted and learning nothing, because
+you never had to commit to anything.
 
-- **No live hints.** No recommended move, no highlighted button, no strategy chart on the table.
-- **Post-hand review.** After a hand, the review names the decision that mattered, gives the better
-  play, and explains the reasoning with numbers that are actually calculated.
-- **Real rules.** Six deck shoe, dealer soft 17 behaviour, splits, double after split, late
-  surrender, insurance, side pots in poker, correct baccarat third card rules, both roulette wheels.
-- **No money.** No accounts, no deposits, no withdrawals, no chips to buy, no ads.
-- **Table films.** Each game plays a scripted hand of itself on the homepage, through to the
-  review, using the same card and chip components as the real tables.
+So Afterhand stays quiet. No recommended move, no highlighted button, no strategy chart on the
+table. You look at your total, look at the dealer's upcard, and choose. Once the hand settles, the
+review opens and tells you what you did, what the better play was, and why.
 
-## Supported games
+The other thing it does is keep two ideas apart that casinos deliberately blur: whether a decision
+was correct, and whether it worked. A correct play that lost the hand is still marked correct, and
+the review says so in as many words. Most of what feels like a mistake at a table is just variance,
+and you cannot get better at the game until you can tell the two apart.
+
+## What is in it
 
 | Game | Modes | Notes |
 | --- | --- | --- |
-| Blackjack | Play, Learn, Practice, Rules | The flagship. Full basic strategy engine and a mastery grid. |
-| Texas Hold'em | Play, Learn, Rules | Four handed against computer opponents, with side pots and a hand history. |
+| Blackjack | Play, Learn, Practice, Rules | The main one. Full basic strategy engine and a mastery grid. |
+| Texas Hold'em | Play, Learn, Practice, Rules | Four handed against computer opponents, with side pots and a hand history. |
 | Baccarat | Play, Learn, Rules | Automatic drawing rules, explained after every hand. |
 | Roulette | Play, Learn, Rules | European and American wheels, full interactive layout. |
 
-### Blackjack in more detail
+The rules are the real ones: six deck shoe, dealer soft 17 behaviour, splits and resplits, double
+after split, late surrender, insurance, correct baccarat third card rules, proper side pot
+construction in poker, and both roulette wheel layouts.
+
+There is no money in it anywhere. No accounts, no deposits, no withdrawals, no chips to buy, no
+ads, and nothing to sign up for. Close the tab and the session is gone.
+
+Each game also plays a short hand of itself on the homepage, right through to the review, so you
+can see how a session reads before you sit down. Those are built out of the same card and chip
+components the real tables use rather than being video, which keeps them sharp at any size and
+costs nothing to serve.
+
+### How the blackjack coaching works
 
 The strategy engine is a fixed multi-deck basic strategy chart. It is deterministic and adjusts for
-the number of decks, the dealer's soft 17 rule, double after split, and whether surrender is
-offered. No language model is involved in deciding the correct play.
+the number of decks, the dealer's soft 17 rule, whether double after split is allowed, and whether
+surrender is offered. No language model decides the correct play, because a language model would
+occasionally be confidently wrong and there is no reason to guess at something that has a known
+answer.
 
-Decisions are graded as Optimal, Acceptable, Mistake, or Major mistake. Acceptable covers close
-calls and decisions that are directionally right but give up value, such as hitting when doubling
-was available.
+Decisions come back as Optimal, Acceptable, Mistake, or Major mistake. Acceptable covers the close
+calls and the plays that are directionally right but give up a little value, like hitting when you
+could have doubled.
 
-Probabilities shown in reviews (dealer bust rates, the chance of busting on the next card, and the
-outcome split for standing) are computed by exhaustive recursion over an infinite deck model. They
-ignore cards already dealt, and the app says so wherever they appear. Expected value figures are
-deliberately omitted rather than estimated.
+The probabilities in the reviews (dealer bust rates, your chance of busting on the next card, how
+standing tends to split out) are calculated by exhaustive recursion over an infinite deck model.
+They ignore the cards already dealt, and the app says so wherever it shows one. Expected value
+numbers are left out entirely rather than estimated, since a made up EV figure is worse than none.
 
-### Poker in more detail
+### How the poker coaching works
 
-Opponents use hand strength, pot odds, position, and a personality profile that shifts their
-thresholds and adds noise, so the table does not play the same way every hand.
+The opponents play off hand strength, pot odds, position, and a personality that shifts their
+thresholds and adds some noise, so the table does not play identically every hand.
 
-Poker coaching never claims there is one correct decision. It states the price the pot was
-offering, the equity measured by Monte Carlo simulation against random holdings, and how those two
-compare. The assumption is stated every time.
+Poker coaching never pretends there is one right answer. It tells you the price the pot was
+offering, the equity from a Monte Carlo simulation against random holdings, and how the two compare.
+The assumption that opponents hold random cards is stated every time, because it matters and it is
+not true at a real table.
 
-## Tech stack
+## Built with
 
-- [Next.js](https://nextjs.org) 16 with the App Router
+- [Next.js](https://nextjs.org) 16, App Router
 - React 19 and TypeScript in strict mode
 - Tailwind CSS v4
-- Framer Motion for card, chip, and panel animation
-- Zustand for game session state
-- Vitest for the game logic tests
+- Framer Motion for the card, chip, and panel animation
+- Zustand for session state
+- Vitest for the engine tests
 
-No backend, no database, no authentication, and no environment variables are required.
+No backend, no database, no auth, and no environment variables. The whole thing runs in the browser.
 
-## Local development
+## Running it locally
 
 ```bash
 npm install
@@ -80,80 +96,67 @@ Then open [http://localhost:3000](http://localhost:3000).
 
 ```bash
 npm run lint     # ESLint
-npm run test     # Vitest, game logic only
+npm run test     # Vitest, engines and strategy
 npm run build    # Production build
 npm run start    # Serve the production build
 ```
 
+The tests are a good place to start if you are poking around. The engines are pure functions with
+no React anywhere near them, so `tests/` covers card values and soft aces, blackjack and bust
+detection, split and double rules, dealer behaviour under both soft 17 rules, payouts and pushes,
+the full basic strategy chart, poker hand evaluation and side pots, baccarat third card rules, and
+roulette payouts.
+
+`tests/invariants.test.ts` is a bit different. It plays a few hundred randomised hands through each
+engine and asserts the things that have to hold no matter what comes off the deck: money is
+conserved across a session, chips are conserved across a poker hand and the pot is always fully
+distributed, a bankroll never goes negative, no hand is ever left unresolved, and every round
+terminates.
+
 ## Deployment
 
-The project deploys to Vercel with no configuration. Import the repository, keep the defaults, and
-deploy. Everything is statically prerendered and all game logic runs in the browser, so there is
-nothing to provision.
+It deploys to Vercel with no configuration. Import the repo, keep the defaults, done.
 
-Every route in the build is marked `○ (Static)`. There are no API routes, no server actions, no
-image optimisation, and deliberately no middleware, so a page view costs bandwidth and nothing
-else.
+Every route is prerendered at build time. There are no API routes, no server actions, no image
+optimisation, and no middleware, so serving a page costs bandwidth and nothing else.
 
-### Running costs
+A few of those are deliberate choices rather than accidents:
 
-The expensive things on Vercel are function invocations, image optimisation, and bandwidth. This
-project avoids the first two entirely and keeps the third small.
-
-What the repository already does:
-
-- **No middleware.** Middleware runs as a function on every matched request. On an otherwise
-  static site it would turn every page view into a billed invocation. Security headers are set in
-  `next.config.ts` instead, where the CDN applies them for free.
+- **No middleware.** Middleware runs as a function on every matched request, which on an otherwise
+  static site would turn each page view into a billed invocation. The security headers live in
+  `next.config.ts` instead, where the CDN applies them for nothing.
 - **No `next/image`.** Optimised images are billed per source image. The cards, chips, wheel, and
-  icons are all drawn in CSS, so the site ships no raster assets at all.
-- **No video files.** The table films are scripted frames rendered by components that have already
-  loaded, not media downloads. A single short clip would outweigh the rest of the site.
-- **Fonts self-hosted at build** through `next/font`, so there is no third party request.
-- **Scoped link prefetching.** Next prefetches every `<Link>` in the viewport by default. The
-  footer alone would have fired nine speculative requests on every page view. Prefetch is now
-  limited to primary actions.
-- **Long lived caching** on the generated icons, manifest, Open Graph card, robots, and sitemap,
-  which previously revalidated on every request.
+  icons are all drawn in CSS, so there are no raster assets to optimise.
+- **No video.** The homepage films are scripted frames rendered by components that have already
+  loaded. One short clip would outweigh everything else the site serves.
+- **Fonts self-hosted at build** through `next/font`, so nothing is fetched from a third party.
+- **Prefetch limited to primary actions.** Next prefetches every link in the viewport by default,
+  and the footer alone would have fired nine speculative requests on every page view.
 
-What to set once in the Vercel dashboard, which cannot be done from the repository:
+There is no rate limiting in the code because there is no endpoint to limit. Nothing here reaches a
+server. If you fork this and want protection against someone hammering the CDN, that belongs in
+Vercel's firewall settings, along with a spend cap.
 
-1. **Spend management.** Project settings, Usage, set a spend limit and an alert threshold. This is
-   the only hard ceiling on a bill.
-2. **Firewall rate limiting.** Project settings, Firewall. A rule such as 200 requests per minute
-   per IP across `/.*` is far above real use and stops a scraper from running up transfer costs.
-   There is no application level rate limiting in the code because there is no endpoint to limit:
-   nothing here reaches a server.
-3. **Attack Challenge Mode**, in the same panel, if the site is ever targeted.
+## On phones
 
-### Domain
+Phones got proper attention rather than a shrunk down desktop layout. A few things that needed
+real work:
 
-`metadataBase`, the sitemap, and the canonical tags all use the apex, `https://afterhand.online`.
-The deployment currently redirects the apex to `www.afterhand.online`, so those canonical URLs
-resolve through a redirect. Set the apex as the primary domain under Project settings, Domains, so
-the canonical host and the served host agree. If you would rather keep `www` as primary, change
-`siteUrl` in `app/layout.tsx` and `BASE` in `app/sitemap.ts` to match.
-
-## Browser and device support
-
-Tested on current Chrome, Safari, Edge, and Firefox, and on iOS Safari and Android Chrome.
-
-Mobile specifics worth knowing:
-
-- Layout heights use `dvh` rather than `vh`, so the collapsing iOS Safari toolbar does not crop the
-  control rail.
-- `viewport-fit=cover` plus `env(safe-area-inset-*)` keeps the rails clear of the home indicator
+- Heights use `dvh` rather than `vh`, so the iOS Safari toolbar collapsing does not crop the
+  control rail off the bottom of the screen.
+- `viewport-fit=cover` with `env(safe-area-inset-*)` keeps the controls clear of the home indicator
   and the notch.
-- The theme colour follows the surface, so the browser chrome goes dark when you sit down at a
-  table and light again when you leave.
-- Blackjack card sizes scale with the number of split hands, so four hands still fit across a
-  375px screen, and the row scrolls the active hand into view if it ever cannot.
-- The roulette layout is wider than a phone by design. It scrolls horizontally with a masked edge
-  to show there is more.
-- Tap highlight and double tap zoom are suppressed on controls so repeated presses at a table do
-  not read as lag.
+- The browser chrome colour follows the surface, so it goes dark when you sit down at a table and
+  comes back to paper when you leave.
+- Blackjack card sizes scale with the number of split hands. Four hands at full size do not fit
+  across a 375px screen, so they shrink, and the row scrolls the hand you are playing into view if
+  it still cannot fit.
+- The roulette layout is wider than a phone on purpose. It scrolls sideways with a faded edge so it
+  is obvious there is more of it.
+- Tap highlight and double tap zoom are turned off on the controls, because at a table you press
+  things quickly and repeatedly and both of those read as lag.
 
-## Project structure
+## How it is laid out
 
 ```
 app/                    Routes, metadata, sitemap, robots, manifest, generated images
@@ -176,26 +179,35 @@ tests/                  Vitest suites for the engines
 types/                  Shared card and game types
 ```
 
-Game logic lives in `lib/` and never depends on React, so every engine can be tested on its own.
+Game logic lives in `lib/` and never imports React, so every engine can be tested on its own and
+the UI can be rewritten without touching the rules.
 
 ## Design
 
-The app uses two surfaces that share one set of tokens. The reading side (home, rules, tutorials,
-practice, settings) is warm printed paper. The playing side is a dark room with felt. Entering a
-session dims the lights, and finishing one brings them back up.
+There are two surfaces sharing one set of tokens. The reading side (home, rules, tutorials,
+practice, settings) is warm printed paper. The playing side is a dark room with felt on the table.
+Sitting down at a game dims the lights and leaving brings them back up.
 
-## Local data and privacy
+The cards are drawn rather than drawn from anywhere. Every rank, suit, pip layout, and card back is
+CSS, which is why they stay crisp at any size and why the whole site has no image payload.
 
-Preferences and learning progress are stored in this browser using localStorage, with a version
-number so the shape can migrate later. An active session keeps a small recovery record in
-sessionStorage so a refresh does not lose your seat. Nothing is sent to a server, there is no
-account, and everything can be cleared from the settings page.
+## Your data
 
-## Educational disclaimer
+Preferences and learning progress live in your browser's localStorage, with a version number on
+them so the shape can migrate later. An active session keeps a small recovery record in
+sessionStorage so a refresh does not lose your seat. None of it is sent anywhere, there is no
+account attached to it, and the settings page can clear all of it.
 
-Afterhand is an educational casino strategy simulator using simulated currency only. It does not
-support real-money gambling, deposits, or withdrawals. Nothing in this project is gambling advice,
-and no strategy described here overcomes the house edge.
+## A disclaimer, since it matters
+
+Afterhand is an educational simulator that uses fake money. It does not support real money
+gambling, deposits, or withdrawals, and it never will. Nothing here is gambling advice, and no
+strategy in it beats the house edge. Basic strategy makes you lose more slowly, which is a genuinely
+useful thing to know and is not the same as winning.
+
+If gambling is causing you problems, [BeGambleAware](https://www.begambleaware.org) and the
+[National Council on Problem Gambling](https://www.ncpgambling.org) both have free, confidential
+help.
 
 ## License
 
