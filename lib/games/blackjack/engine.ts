@@ -512,6 +512,10 @@ export function settle(state: BlackjackState): BlackjackState {
     bankroll,
     results,
     insuranceResult,
+    // A hand settled straight off the deal, for example against a dealer
+    // natural, never went through resolveActive. Close it here so a settled
+    // round never carries an open hand.
+    hands: state.hands.map((hand) => (hand.resolved ? hand : { ...hand, resolved: true })),
     dealer: { ...state.dealer, holeRevealed: true },
     shoe: { ...state.shoe, needsShuffle: cutCardReached(state.shoe) },
     dealerMessage: outcomeMessage(results, state.dealer.cards),
