@@ -31,6 +31,9 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
+                /* Nav links are one hop from anywhere and the pages are static and
+                   small. Prefetching each one on every page view is not worth it. */
+                prefetch={false}
                 className={cn(
                   "relative py-1 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors",
                   active ? "text-fg" : "text-fg-3 hover:text-fg",
@@ -51,6 +54,7 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-5">
           <Link
             href="/settings"
+            prefetch={false}
             className="hidden font-mono text-[11px] tracking-[0.14em] text-fg-3 uppercase transition-colors hover:text-fg md:inline-block"
           >
             Settings
@@ -88,6 +92,7 @@ export function SiteHeader() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={false}
                   onClick={() => setOpen(false)}
                   className="py-3.5 font-mono text-[12px] tracking-[0.14em] text-fg-2 uppercase"
                 >

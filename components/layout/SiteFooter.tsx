@@ -50,6 +50,9 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
+                      /* Footer links sit in the viewport on every page. Prefetching
+                         all nine of them on every visit costs far more than it saves. */
+                      prefetch={false}
                       className="text-[13.5px] text-fg-2 transition-colors hover:text-fg"
                     >
                       {link.label}

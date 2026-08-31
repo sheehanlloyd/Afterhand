@@ -44,6 +44,13 @@ export function GameCard({ game, index }: { game: GameEntry; index: number }) {
           <li key={link.href}>
             <Link
               href={link.href}
+              /**
+               * Only the primary route is worth prefetching. Four cards times
+               * four links is sixteen speculative payloads for a page where
+               * most visitors take one of them, and every one of those is a
+               * billed edge request. The rest are static and load fast anyway.
+               */
+              prefetch={position === 0 ? undefined : false}
               className={cn(
                 "flex items-center justify-between px-5 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors",
                 position === 0 ? "text-fg" : "text-fg-3",
