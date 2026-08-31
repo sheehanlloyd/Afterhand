@@ -97,11 +97,12 @@ export function BettingRail({
         </>
       }
       chips={
-        <div className="flex flex-wrap justify-center gap-2 [--chip-w:2.5rem] sm:gap-2.5 sm:[--chip-w:3rem]">
+        <div className="flex flex-wrap justify-center gap-2.5 [--chip-w:2.9rem] sm:gap-2.5 sm:[--chip-w:3rem]">
           {chips.map((value) => (
             <Chip
               key={value}
               value={value}
+              draggable
               onClick={() => onChip(value)}
               disabled={bet + value > Math.min(maxBet, bankroll + bet)}
             />

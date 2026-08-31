@@ -19,7 +19,7 @@ function CardFace({ card }: { card: Card }) {
       className="absolute inset-0 overflow-hidden rounded-[7%/5%] bg-[linear-gradient(160deg,var(--color-ivory),var(--color-ivory-dim))]"
       style={{
         boxShadow:
-          "0 0 0 1px var(--color-ivory-edge) inset, 0 1px 1px rgba(255,255,255,0.9) inset",
+          "0 0 0 1px var(--color-ivory-edge) inset, 0 1px 1px rgba(255,255,255,0.9) inset, 0 8px 12px -4px rgba(0,0,0,0.45)",
       }}
     >
       {/* Corner indices */}
@@ -112,7 +112,7 @@ function CardBack() {
         background:
           "linear-gradient(160deg, var(--color-felt-600), var(--color-felt-900))",
         boxShadow:
-          "0 0 0 1px rgba(194,166,107,0.35) inset, 0 0 0 4px rgba(0,0,0,0.18) inset",
+          "0 0 0 1px rgba(194,166,107,0.35) inset, 0 0 0 4px rgba(0,0,0,0.18) inset, 0 8px 12px -4px rgba(0,0,0,0.45)",
       }}
     >
       <div
@@ -167,9 +167,10 @@ export function PlayingCard({
         ease: [0.22, 1, 0.36, 1],
         delay: still || reduced ? 0 : Math.min(index, 6) * 0.07,
       }}
-      style={{
-        filter: "drop-shadow(0 8px 12px rgba(0,0,0,0.45))",
-      }}
+      /* The shadow lives on the faces below rather than here.
+         A filter on the element being animated makes the browser
+         re-rasterise the card on every frame of the deal, which is the
+         difference between a smooth deal and a stuttering one on a phone. */
     >
       <motion.div
         className="relative h-full w-full [transform-style:preserve-3d]"
@@ -200,7 +201,7 @@ export function CardBackTile({
     <div
       className={cn("relative aspect-[5/7] w-[var(--card-w,4rem)] shrink-0", className)}
       aria-hidden="true"
-      style={{ filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.4))", ...style }}
+      style={style}
     >
       <CardBack />
     </div>

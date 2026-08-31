@@ -19,6 +19,7 @@ import { SessionSummary } from "./SessionSummary";
 import { BlackjackTable } from "./BlackjackTable";
 import { ActionRail, BettingRail, InsuranceRail, SettledRail } from "./Rails";
 import { formatMoney } from "@/lib/utils/format";
+import { ChipDragProvider } from "@/components/chips/chip-drag";
 
 const ACTION_KEYS: Record<string, PlayerAction> = {
   h: "hit",
@@ -133,8 +134,9 @@ export function BlackjackScreen() {
   const meaningfulSession = store.history.length > 0 || game.phase !== "betting";
 
   return (
-    <GameFrame
-      header={
+    <ChipDragProvider>
+      <GameFrame
+        header={
         <GameHeader
           game="Blackjack"
           mode={mode === "learn" ? "Learn" : "Play"}
@@ -296,6 +298,7 @@ export function BlackjackScreen() {
           </>
         }
       />
-    </GameFrame>
+      </GameFrame>
+    </ChipDragProvider>
   );
 }

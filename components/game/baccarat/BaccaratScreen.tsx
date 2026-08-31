@@ -23,6 +23,11 @@ import { Placard, SimpleSetup } from "@/components/game/SimpleSetup";
 import { CardRow } from "@/components/game/blackjack/HandDisplay";
 import { BetRailLayout, RailFrame, CHIP_DENOMINATIONS } from "@/components/game/blackjack/Rails";
 import { Chip } from "@/components/chips/Chip";
+import {
+  CHIP_DROP_ATTRIBUTE,
+  ChipDragProvider,
+  useChipDrag,
+} from "@/components/chips/chip-drag";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Stat } from "@/components/ui/Stat";
@@ -45,7 +50,17 @@ interface RoundLog {
   net: number;
 }
 
+/** The provider has to sit above the table so the zones can see the drag. */
 export function BaccaratScreen() {
+  return (
+    <ChipDragProvider>
+      <BaccaratTable />
+    </ChipDragProvider>
+  );
+}
+
+function BaccaratTable() {
+  const { dragging, over } = useChipDrag();
   const { preferences, update } = usePreferences();
   const [status, setStatus] = useState<"setup" | "playing" | "summary">("setup");
   const [mode, setMode] = useState<GameMode>(preferences.preferredMode);
@@ -238,13 +253,25 @@ export function BaccaratScreen() {
               </>
             }
             chips={
-              <div className="flex flex-wrap justify-center gap-2 [--chip-w:2.5rem] sm:gap-2.5 sm:[--chip-w:3rem]">
+              <div className="flex flex-wrap justify-center gap-2.5 [--chip-w:2.9rem] sm:gap-2.5 sm:[--chip-w:3rem]">
                 {CHIP_DENOMINATIONS.filter((value) => value <= RULES.maxBet).map((value) => (
                   <Chip
                     key={value}
                     value={value}
+                    draggable={round === null}
                     onClick={() => {
                       playSound("chip");
+                      setAmount((current) =>
+                        Math.min(current + value, Math.min(RULES.maxBet, bankroll)),
+                      );
+                    }}
+                    /* Dropping a chip on a zone picks that side and stakes it,
+                       which is the one gesture rather than the usual two. */
+                    onDrop={(target) => {
+                      playSound("chip");
+                      if (target === "player" || target === "banker" || target === "tie") {
+                        setBet(target);
+                      }
                       setAmount((current) =>
                         Math.min(current + value, Math.min(RULES.maxBet, bankroll)),
                       );
@@ -371,6 +398,7 @@ export function BaccaratScreen() {
                   key={option.id}
                   type="button"
                   disabled={disabled}
+                  {...(disabled ? {} : { [CHIP_DROP_ATTRIBUTE]: option.id })}
                   onClick={() => {
                     playSound("click");
                     setBet(option.id);
@@ -378,9 +406,12 @@ export function BaccaratScreen() {
                   aria-pressed={active}
                   className={cn(
                     "flex flex-col items-center gap-1.5 border px-2 py-3 transition-colors",
-                    active
-                      ? "border-[rgba(201,167,94,0.8)] bg-[rgba(201,167,94,0.1)]"
-                      : "border-[rgba(236,229,216,0.16)] hover:border-[rgba(236,229,216,0.3)]",
+                    over === option.id
+                      ? "border-[rgba(201,167,94,0.95)] bg-[rgba(201,167,94,0.18)]"
+                      : active
+                        ? "border-[rgba(201,167,94,0.8)] bg-[rgba(201,167,94,0.1)]"
+                        : "border-[rgba(236,229,216,0.16)] hover:border-[rgba(236,229,216,0.3)]",
+                    dragging && over !== option.id && "border-dashed",
                     disabled && "opacity-60",
                   )}
                 >
