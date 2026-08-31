@@ -1,0 +1,260 @@
+@import "tailwindcss";
+
+/*
+  Afterhand uses two surfaces that share one set of semantic tokens.
+
+  "paper"  the reading and learning side of the product. Warm printed stock,
+           ink on oat, hairline rules, editorial spacing.
+  "room"   the playing side. The lights go down and the felt comes up.
+
+  Components only ever reference the semantic names, so the same button works
+  on a rules page and on the table.
+*/
+
+:root {
+  --paper: #f0eae0;
+  --paper-2: #e7dfd2;
+  --paper-3: #ded4c4;
+  --ink: #15181a;
+  --ink-2: #565d60;
+  --ink-3: #8b9296;
+  --rule: rgba(21, 24, 26, 0.16);
+  --rule-2: rgba(21, 24, 26, 0.3);
+  --green: #14483a;
+  --green-soft: #2c6a55;
+  --ochre: #9a6a1f;
+  --ochre-soft: #c19442;
+  --claret: #9d2f2c;
+
+  /* Semantic, swapped per surface */
+  --surface: var(--paper);
+  --surface-2: var(--paper-2);
+  --surface-3: var(--paper-3);
+  --fg: var(--ink);
+  --fg-2: var(--ink-2);
+  --fg-3: var(--ink-3);
+  --line: var(--rule);
+  --line-2: var(--rule-2);
+  --accent: var(--green);
+  --accent-2: var(--ochre);
+  --field: rgba(255, 255, 255, 0.5);
+  --btn-fg: #f4efe5;
+  --btn-bg: var(--green);
+  --positive: #1d6b4b;
+  --negative: #9d2f2c;
+  --caution: #97701f;
+
+  --scrim: rgba(21, 24, 26, 0.42);
+  --shell-max: 72rem;
+  color-scheme: light;
+}
+
+:root[data-surface="room"] {
+  --surface: #0c0f0e;
+  --surface-2: #131817;
+  --surface-3: #1b2220;
+  --fg: #ece5d8;
+  --fg-2: #9aa29d;
+  --fg-3: #6a726e;
+  --line: rgba(236, 229, 216, 0.13);
+  --line-2: rgba(236, 229, 216, 0.26);
+  --accent: #c9a75e;
+  --accent-2: #c9a75e;
+  --field: rgba(255, 255, 255, 0.04);
+  --btn-fg: #10130f;
+  --btn-bg: #c9a75e;
+  --positive: #7fb195;
+  --negative: #cd8079;
+  --caution: #d0aa63;
+  --scrim: rgba(3, 5, 4, 0.74);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-field: var(--field);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-caution: var(--caution);
+  --color-scrim: var(--scrim);
+
+  --color-felt-900: #08211a;
+  --color-felt-800: #0c2c23;
+  --color-felt-700: #11392d;
+  --color-felt-600: #164839;
+  --color-felt-500: #1c5a47;
+  --color-ivory: #f7f3ea;
+  --color-ivory-dim: #f2ece0;
+  --color-ivory-edge: #d8cfbd;
+  --color-brass: #c9a75e;
+  --color-brass-deep: #8d6f2c;
+  --color-suit-red: #9d2f2c;
+  --color-suit-black: #15181a;
+
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--surface);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    overscroll-behavior-y: none;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+
+  /* Paper stock texture. Two crossed gradients, no image payload. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(21, 24, 26, 0.022) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(21, 24, 26, 0.016) 0 1px, transparent 1px 4px);
+  }
+
+  :root[data-surface="room"] body::before {
+    opacity: 0.6;
+    background-image:
+      radial-gradient(110% 70% at 50% -15%, rgba(201, 167, 94, 0.07), transparent 62%),
+      radial-gradient(80% 60% at 50% 115%, rgba(22, 72, 57, 0.2), transparent 68%);
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent-2) 34%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+  }
+
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  /* Editorial microlabel. Used for every eyebrow and column head in the app. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+  }
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.02;
+  }
+
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Signature divider: a heavy rule with a hairline beneath it, the way a
+     printed rulebook separates sections. */
+  .rule-double {
+    border: 0;
+    height: 3px;
+    background:
+      linear-gradient(var(--fg) 0 0) top / 100% 1.5px no-repeat,
+      linear-gradient(var(--line-2) 0 0) bottom / 100% 1px no-repeat;
+  }
+
+  .hair-top {
+    border-top: 1px solid var(--line);
+  }
+
+  .hair-bottom {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .card-surface {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+
+  .felt {
+    position: relative;
+    background:
+      radial-gradient(118% 74% at 50% -6%, rgba(226, 240, 231, 0.05), transparent 46%),
+      radial-gradient(96% 84% at 50% 118%, rgba(0, 0, 0, 0.5), transparent 62%),
+      linear-gradient(178deg, #123a2e 0%, #0d2c23 46%, #08211a 100%);
+  }
+
+  /* Woven nap plus a vignette, so the middle of the table catches the light. */
+  .felt::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
+      radial-gradient(112% 96% at 50% 46%, transparent 34%, rgba(0, 0, 0, 0.42) 100%);
+  }
+
+  /* Numbered editorial section head */
+  .section-head {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
