@@ -207,6 +207,8 @@ function PlayingRoom({
   return (
     <>
       <GameFrame
+        railKey={game.phase}
+        railActive={game.phase === "player" || game.phase === "insurance"}
         header={
         <GameHeader
           game="Blackjack"

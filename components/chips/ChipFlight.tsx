@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChipFace, chipBreakdown } from "./Chip";
@@ -8,6 +16,7 @@ import { useTableSpace } from "@/lib/motion/table-space";
 import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
 import { wobbleOf } from "@/lib/motion/jitter";
 import { playSound, playSoundIn } from "@/lib/sound";
+import { registerChipSender } from "@/lib/motion/chip-bus";
 
 /**
  * Chips crossing the table.
@@ -122,6 +131,12 @@ export function ChipFlightLayer({ children }: { children: ReactNode }) {
     },
     [rectOf, reduced],
   );
+
+  /* Games drive chips from their stores, which are outside React. */
+  useEffect(() => {
+    registerChipSender(send);
+    return () => registerChipSender(null);
+  }, [send]);
 
   const value = useMemo(() => ({ send }), [send]);
 

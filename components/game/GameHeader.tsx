@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { Logo } from "@/components/layout/Logo";
 import { formatMoney } from "@/lib/utils/format";
+import { Counter } from "@/components/ui/Counter";
+import { DURATION } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
 export interface GameMenuItem {
@@ -74,9 +76,16 @@ export function GameHeader({
           {bankroll !== undefined ? (
             <div className="text-right">
               <div className="label hidden leading-none sm:block">Bankroll</div>
-              <div className="tabular text-[14px] leading-none text-fg sm:mt-1 sm:text-[15px]">
-                {formatMoney(bankroll)}
-              </div>
+              {/* The bankroll counts to its new figure rather than replacing
+                  itself, and it starts a beat late so the chips that caused the
+                  change have already left the table. */}
+              <Counter
+                value={bankroll}
+                format={formatMoney}
+                duration={DURATION.reveal}
+                delay={0.18}
+                className="block text-[14px] leading-none text-fg sm:mt-1 sm:text-[15px]"
+              />
             </div>
           ) : null}
 

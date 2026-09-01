@@ -436,8 +436,13 @@ function CardBody({
                 animate={{ rotateY: faceDown ? 180 : 0 }}
                 transition={{ duration: inert ? 0 : DURATION.flip, ease: EASE.arrive }}
               >
+                {/* The face is only in the document when the card is face up.
+                    Backface visibility hides it on screen, but a hole card whose
+                    rank can be read out of the DOM or by a screen reader is not
+                    a hole card. It mounts as the card turns, behind its own
+                    back, so the reveal is unaffected. */}
                 <div className="absolute inset-0 [backface-visibility:hidden]">
-                  <CardFace card={card} />
+                  {faceDown ? null : <CardFace card={card} />}
                 </div>
                 <div className="absolute inset-0 [transform:rotateY(180deg)] [backface-visibility:hidden]">
                   <CardBack />

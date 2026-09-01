@@ -22,6 +22,8 @@ import { PokerActionRail, PokerDealRail, PokerHandOverRail } from "./PokerRails"
 import { PokerReview } from "./PokerReview";
 import { formatDuration, formatMoney, formatPercent } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
+import { TableSpaceProvider } from "@/lib/motion/table-space";
+import { ChipFlightLayer } from "@/components/chips/ChipFlight";
 
 const STACKS = [500, 1000, 2500, 5000];
 
@@ -257,8 +259,12 @@ export function PokerScreen() {
   const canDeal = table.handNumber === 0 || handOver;
 
   return (
-    <GameFrame
-      header={
+    <TableSpaceProvider>
+      <ChipFlightLayer>
+        <GameFrame
+          railKey={`${table.street}-${handOver}`}
+          railActive={Boolean(acting?.isHuman) && !handOver && !store.waiting}
+          header={
         <GameHeader
           game="Poker"
           mode={store.mode === "learn" ? "Learn" : "Play"}
@@ -311,12 +317,12 @@ export function PokerScreen() {
           <PokerActionRail
             state={table}
             onAction={store.act}
-            disabled={store.waiting || !acting?.isHuman}
+            disabled={store.waiting || store.dealing || !acting?.isHuman}
           />
         )
       }
     >
-      <PokerTable state={table} />
+      <PokerTable state={table} reveal={store.reveal} potShown={store.potShown} />
 
       <AnimatePresence>
         {store.reviewOpen && store.reviewSummary ? (
@@ -363,6 +369,8 @@ export function PokerScreen() {
           </>
         }
       />
-    </GameFrame>
+        </GameFrame>
+      </ChipFlightLayer>
+    </TableSpaceProvider>
   );
 }

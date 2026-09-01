@@ -10,6 +10,7 @@ import { BetStack } from "@/components/chips/Chip";
 import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
 import { wobbleOf } from "@/lib/motion/jitter";
 import { useTableAnchor } from "@/lib/motion/table-space";
+import { WinBurst } from "@/components/game/table/WinBurst";
 import { cn } from "@/lib/utils/cn";
 
 export function TotalPlate({
@@ -82,6 +83,8 @@ export function CardRow({
   short = false,
   /** A neat fan rather than a scattered pile. */
   square = false,
+  /** Lifts on hover, for cards that belong to the person holding the mouse. */
+  interactive = false,
 }: {
   cards: Card[];
   faceDownFrom?: number;
@@ -91,6 +94,7 @@ export function CardRow({
   leaving?: boolean;
   short?: boolean;
   square?: boolean;
+  interactive?: boolean;
 }) {
   const shown = visible === undefined ? cards : cards.slice(0, Math.max(0, visible));
 
@@ -118,6 +122,7 @@ export function CardRow({
             origin={origin}
             short={short || index > 1}
             square={square}
+            interactive={interactive}
             leaving={leaving}
             faceDown={faceDownFrom !== undefined && index >= faceDownFrom}
           />
@@ -235,6 +240,8 @@ export function PlayerHand({
             />
           ) : null}
         </AnimatePresence>
+
+        <WinBurst active={Boolean(isBlackjack)} seed={cards[0]?.id ?? "hand"} />
 
         <motion.div
           animate={{

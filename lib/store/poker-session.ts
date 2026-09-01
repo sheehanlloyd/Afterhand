@@ -11,7 +11,38 @@ import {
   loadPokerLearning,
   savePokerLearning,
 } from "@/lib/storage/learning-games";
-import { playSound } from "@/lib/sound";
+import { playSound, playSoundIn } from "@/lib/sound";
+import { useDealer } from "@/lib/store/dealer";
+import { moveChips } from "@/lib/motion/chip-bus";
+import { applyStep, clampCounts, revealSteps } from "@/lib/motion/deal-order";
+import { DURATION, RHYTHM } from "@/lib/motion/tokens";
+
+/** Chip denominations the table pays and takes in. */
+export const POKER_CHIPS = [5, 10, 25, 50, 100, 500, 1000];
+
+/**
+ * What is physically on the poker table, as opposed to what the engine says.
+ *
+ * The engine resolves a whole street in one call: it burns a card, turns three
+ * over and works out who is first to act. Showing all of that in the same frame
+ * is the difference between a hand you can follow and a list of cards you have
+ * to read. So the state is diffed against the felt and the difference is
+ * performed.
+ */
+export interface PokerReveal {
+  /** Hole cards physically dealt, per player. */
+  hole: Record<string, number>;
+  /** Community cards on the felt. */
+  board: number;
+  /** Community cards that have been turned over. */
+  faceUp: number;
+  /** Players whose hole cards have been shown, in the order they were shown. */
+  shown: string[];
+  /** Bumped each time a card is burned, so the burn can be animated. */
+  burn: number;
+}
+
+const EMPTY_REVEAL: PokerReveal = { hole: {}, board: 0, faceUp: 0, shown: [], burn: 0 };
 
 export interface PokerHandSummary {
   number: number;
@@ -40,6 +71,15 @@ interface PokerSessionStore {
   reviewOpen: boolean;
   reviewSummary: PokerHandSummary | null;
   waiting: boolean;
+  /** What has physically reached the felt. */
+  reveal: PokerReveal;
+  /** True while the dealer is putting cards out and nobody may act. */
+  dealing: boolean;
+  /**
+   * The pot as displayed. It lags the engine's figure until the chips that
+   * changed it have finished crossing the table.
+   */
+  potShown: number;
 
   start: (config: PokerSessionConfig) => void;
   deal: () => void;
@@ -101,9 +141,178 @@ function buildDecisions(table: PokerState): PokerDecision[] {
 }
 
 export const usePokerSession = create<PokerSessionStore>((set, get) => {
+  /**
+   * Deals the hole cards round the table.
+   *
+   * Two cards each, one seat at a time, starting left of the button, then round
+   * again. Nobody may act until the last one is down. Returns when the deal is
+   * finished so the rest of the hand can be scheduled behind it.
+   */
+  function dealHoleCards(table: PokerState): number {
+    const order = table.players.map((player) => player.id);
+    const target = {
+      dealer: 0,
+      hands: Object.fromEntries(table.players.map((p) => [p.id, p.hole.length])),
+    };
+    const base = clampCounts({ dealer: 0, hands: get().reveal.hole }, target);
+    const steps = revealSteps(base, target, order);
+    if (steps.length === 0) return 0;
+
+    useDealer.getState().enter("dealing");
+    set({ dealing: true, reveal: { ...get().reveal, hole: base.hands } });
+
+    let counts = base;
+    let at = 0;
+    for (const step of steps) {
+      counts = applyStep(counts, step);
+      const snapshot = counts.hands;
+      schedule(() => {
+        set({ reveal: { ...get().reveal, hole: snapshot } });
+        playSound("deal");
+        playSoundIn("land", Math.round(DURATION.dealShort * 780));
+      }, at);
+      at += RHYTHM.betweenCards * 0.7;
+    }
+
+    const done = at + DURATION.deal * 1000;
+    schedule(() => {
+      set({ dealing: false });
+      useDealer.getState().enter("waiting");
+    }, done);
+    return done;
+  }
+
+  /**
+   * Puts new community cards out.
+   *
+   * A card is burned first, the new cards travel face down, they settle, and
+   * then they are turned. The flop fans outward with a beat between each card;
+   * the turn and the river get a moment of their own before they come over,
+   * because a single card that decides a hand deserves the pause.
+   */
+  function dealBoard(table: PokerState, startAt: number): number {
+    const reveal = get().reveal;
+    const target = table.board.length;
+    if (target <= reveal.board) return startAt;
+
+    const fresh = target - reveal.board;
+    let at = startAt;
+
+    /* The burn. One card off the top, face down, into the muck. */
+    schedule(() => {
+      set({ reveal: { ...get().reveal, burn: get().reveal.burn + 1 } });
+      playSound("deal");
+    }, at);
+    at += 260;
+
+    useDealer.getState().enter("dealing");
+
+    for (let index = 0; index < fresh; index++) {
+      const shown = reveal.board + index + 1;
+      schedule(() => {
+        set({ reveal: { ...get().reveal, board: shown } });
+        playSound("deal");
+        playSoundIn("land", Math.round(DURATION.dealShort * 780));
+      }, at);
+      at += RHYTHM.betweenCommunity;
+    }
+
+    /* Settle, then turn them over one at a time. */
+    at += RHYTHM.beforeReveal;
+    for (let index = 0; index < fresh; index++) {
+      const up = reveal.board + index + 1;
+      schedule(() => {
+        set({ reveal: { ...get().reveal, faceUp: up } });
+        playSound("flip");
+      }, at);
+      at += 90;
+    }
+
+    const done = at + DURATION.flip * 1000;
+    schedule(() => useDealer.getState().enter("waiting"), done);
+    return done;
+  }
+
+  /**
+   * Moves the chips an action put in, then updates the pot.
+   *
+   * This ordering is the whole point. A raise is chips leaving a stack and
+   * landing in the middle; the number in the middle changing is the consequence,
+   * not the event.
+   */
+  function moveCommitted(table: PokerState) {
+    const last = table.history[table.history.length - 1];
+    const pot = table.pot;
+    if (!last || last.amount <= 0) {
+      set({ potShown: pot });
+      return;
+    }
+    moveChips({
+      from: `seat:${last.playerId}`,
+      to: "pot",
+      amount: last.amount,
+      denominations: POKER_CHIPS,
+      onArrive: () => set({ potShown: pot }),
+    });
+  }
+
+  /** Turns each contested hand over in sequence rather than all at once. */
+  function runShowdown(table: PokerState, startAt: number): number {
+    const contested = table.players.filter((player) => player.revealed);
+    if (contested.length === 0) {
+      set({ reveal: { ...get().reveal, shown: [] } });
+      return startAt;
+    }
+
+    let at = startAt;
+    const shown: string[] = [];
+    for (const player of contested) {
+      shown.push(player.id);
+      const snapshot = [...shown];
+      schedule(() => {
+        set({ reveal: { ...get().reveal, shown: snapshot } });
+        playSound("flip");
+      }, at);
+      at += RHYTHM.beforeReveal;
+    }
+    return at;
+  }
+
+  /** Pushes the pot to whoever won it, in stacks, before the stacks update. */
+  function payOut(table: PokerState, startAt: number) {
+    const awards = table.showdown?.awards ?? [];
+    for (const award of awards) {
+      for (const winner of award.winners) {
+        schedule(() => {
+          moveChips({
+            from: "pot",
+            to: `seat:${winner}`,
+            amount: Math.round(award.amount / award.winners.length),
+            denominations: POKER_CHIPS,
+            max: 9,
+          });
+        }, startAt);
+      }
+    }
+    schedule(() => set({ potShown: 0 }), startAt + DURATION.chip * 1000);
+  }
+
   /** Runs opponents until it is the human's turn or the hand is over. */
   function pump(table: PokerState) {
+    const previous = get().table;
     set({ table });
+
+    /* A new hand: reset the felt, then deal. */
+    if (!previous || previous.handNumber !== table.handNumber) {
+      set({ reveal: EMPTY_REVEAL, potShown: 0 });
+    }
+
+    const wait = dealHoleCards(table);
+    const afterBoard = dealBoard(table, wait);
+    if (previous && table.pot !== previous.pot) moveCommitted(table);
+    else if (table.pot !== get().potShown && table.street !== "complete") {
+      set({ potShown: table.pot });
+    }
 
     if (table.street === "complete") {
       const human = engine.humanPlayer(table);
@@ -131,19 +340,35 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
           ),
         );
       }
-      playSound(table.lastNet > 0 ? "win" : table.lastNet < 0 ? "lose" : "click");
-      set({
-        waiting: false,
-        history: [summary, ...state.history].slice(0, 60),
-        reviewSummary: summary,
-        reviewOpen: state.mode === "learn" && decisions.length > 0,
-      });
+      /* The hands come over one at a time, then the pot is pushed, and only
+         then does the result read out. */
+      const shownBy = runShowdown(table, afterBoard);
+      payOut(table, shownBy + 200);
+
+      schedule(() => {
+        playSound(table.lastNet > 0 ? "win" : table.lastNet < 0 ? "lose" : "click");
+        set({
+          waiting: false,
+          history: [summary, ...get().history].slice(0, 60),
+          reviewSummary: summary,
+          reviewOpen: state.mode === "learn" && decisions.length > 0,
+        });
+        useDealer.getState().enter("idle");
+      }, shownBy + 320);
+
+      set({ waiting: true });
       return;
     }
 
     const acting = engine.currentPlayer(table);
     if (!acting || acting.isHuman) {
-      set({ waiting: false });
+      /* The human may act as soon as the cards for this street are down. */
+      if (afterBoard > 0) {
+        set({ waiting: true });
+        schedule(() => set({ waiting: false }), afterBoard);
+      } else {
+        set({ waiting: false });
+      }
       return;
     }
 
@@ -154,7 +379,7 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
       const action = decideAction(current);
       playSound(action.type === "fold" ? "click" : "chip");
       pump(engine.applyAction(current, action));
-    }, thinkingTime());
+    }, afterBoard + thinkingTime());
   }
 
   return {
@@ -168,6 +393,9 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
     reviewOpen: false,
     reviewSummary: null,
     waiting: false,
+    reveal: EMPTY_REVEAL,
+    dealing: false,
+    potShown: 0,
 
     start: (config) => {
       clearTimers();
@@ -188,6 +416,9 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
         reviewOpen: false,
         reviewSummary: null,
         waiting: false,
+        reveal: EMPTY_REVEAL,
+        dealing: false,
+        potShown: 0,
       });
     },
 
@@ -200,15 +431,15 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
         set({ status: "summary", endedAt: Date.now(), reviewOpen: false });
         return;
       }
-      playSound("deal");
-      set({ reviewOpen: false, reviewSummary: null });
+      useDealer.getState().enter("preparing");
+      set({ reviewOpen: false, reviewSummary: null, reveal: EMPTY_REVEAL, potShown: 0 });
       pump(engine.startHand(table));
     },
 
     act: (action) => {
       const state = get();
       const table = state.table;
-      if (!table || state.waiting) return;
+      if (!table || state.waiting || state.dealing) return;
       const acting = engine.currentPlayer(table);
       if (!acting?.isHuman) return;
       playSound(action.type === "fold" ? "click" : "chip");
@@ -220,11 +451,19 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
 
     endSession: () => {
       clearTimers();
-      set({ status: "summary", endedAt: Date.now(), reviewOpen: false, waiting: false });
+      useDealer.getState().reset();
+      set({
+        status: "summary",
+        endedAt: Date.now(),
+        reviewOpen: false,
+        waiting: false,
+        dealing: false,
+      });
     },
 
     leaveSession: () => {
       clearTimers();
+      useDealer.getState().reset();
       set({
         status: "setup",
         table: null,
@@ -233,6 +472,9 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
         reviewOpen: false,
         reviewSummary: null,
         waiting: false,
+        reveal: EMPTY_REVEAL,
+        dealing: false,
+        potShown: 0,
       });
     },
   };
