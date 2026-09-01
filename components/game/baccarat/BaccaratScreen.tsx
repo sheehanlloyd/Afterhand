@@ -33,7 +33,14 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { Stat } from "@/components/ui/Stat";
 import { Modal } from "@/components/ui/Modal";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
-import { playSound } from "@/lib/sound";
+import { playSound, playSoundIn } from "@/lib/sound";
+import { TableSpaceProvider } from "@/lib/motion/table-space";
+import { ChipFlightLayer } from "@/components/chips/ChipFlight";
+import { DiscardTray, Shoe as ShoeBlock } from "@/components/game/table/DealerStation";
+import { TableCamera } from "@/components/game/table/TableCamera";
+import { useDealer } from "@/lib/store/dealer";
+import { applyStep, revealSteps, type RevealCounts } from "@/lib/motion/deal-order";
+import { DURATION, RHYTHM } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
 const RULES = DEFAULT_BACCARAT_RULES;
@@ -53,9 +60,13 @@ interface RoundLog {
 /** The provider has to sit above the table so the zones can see the drag. */
 export function BaccaratScreen() {
   return (
-    <ChipDragProvider>
-      <BaccaratTable />
-    </ChipDragProvider>
+    <TableSpaceProvider>
+      <ChipFlightLayer>
+        <ChipDragProvider>
+          <BaccaratTable />
+        </ChipDragProvider>
+      </ChipFlightLayer>
+    </TableSpaceProvider>
   );
 }
 
@@ -73,6 +84,18 @@ function BaccaratTable() {
   const [net, setNet] = useState(0);
   const [log, setLog] = useState<RoundLog[]>([]);
   const [revealing, setRevealing] = useState(false);
+  /**
+   * Cards physically on the felt, per side.
+   *
+   * Baccarat resolves the whole coup in one call, third cards included. Dealing
+   * it out player, banker, player, banker is what makes the drawing rules
+   * legible: you can see the third card being decided on rather than simply
+   * being there.
+   */
+  const [shown, setShown] = useState<{ player: number; banker: number }>({
+    player: 0,
+    banker: 0,
+  });
   const [rulesOpen, setRulesOpen] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -96,16 +119,45 @@ function BaccaratTable() {
 
   function deal() {
     if (!shoe || amount < RULES.minBet || amount > bankroll || revealing) return;
-    playSound("deal");
     const result = dealRound(shoe);
     setShoe(result.shoe);
     setRound(result.round);
     setRevealing(true);
+    setShown({ player: 0, banker: 0 });
     setBankroll((current) => current - amount);
+    useDealer.getState().enter("dealing");
+
+    /* Round the table twice, then any third cards, on the dealer's rhythm. */
+    const target = {
+      dealer: 0,
+      hands: {
+        player: result.round.playerCards.length,
+        banker: result.round.bankerCards.length,
+      },
+    };
+    let counts: RevealCounts = { dealer: 0, hands: { player: 0, banker: 0 } };
+    let at = 0;
+    for (const step of revealSteps(counts, target, ["player", "banker"])) {
+      counts = applyStep(counts, step);
+      const snapshot = {
+        player: counts.hands.player ?? 0,
+        banker: counts.hands.banker ?? 0,
+      };
+      timers.current.push(
+        setTimeout(() => {
+          setShown({ ...snapshot });
+          playSound("deal");
+          playSoundIn("land", Math.round(DURATION.deal * 780));
+        }, at),
+      );
+      at += RHYTHM.betweenCards;
+    }
+    const landed = at - RHYTHM.betweenCards + DURATION.deal * 1000;
 
     const settlement = settleBet(bet, amount, result.round, RULES);
     timers.current.push(
       setTimeout(() => {
+        useDealer.getState().enter("idle");
         setBankroll((current) => current + settlement.returned);
         setNet(settlement.net);
         setRevealing(false);
@@ -123,13 +175,14 @@ function BaccaratTable() {
             updatedAt: Date.now(),
           });
         }
-      }, 900),
+      }, landed + 320),
     );
   }
 
   function nextHand() {
     setRound(null);
     setNet(0);
+    setShown({ player: 0, banker: 0 });
     if (bankroll < RULES.minBet) {
       setStatus("summary");
     }
@@ -202,6 +255,8 @@ function BaccaratTable() {
 
   const settled = round !== null && !revealing;
   const decksLeft = shoe ? cardsRemaining(shoe) / 52 : 0;
+  /* How far into the shoe the table is, which drives the two card blocks. */
+  const shoeUsed = shoe && shoe.cards.length > 0 ? shoe.position / shoe.cards.length : 0;
 
   return (
     <GameFrame
@@ -342,6 +397,14 @@ function BaccaratTable() {
           <span>{decksLeft.toFixed(1)} decks in shoe</span>
         </div>
 
+        {/* Every card on this felt comes out of the block on the right and ends
+            up in the one on the left, and both of them change size as it does. */}
+        <div className="pointer-events-none absolute inset-x-0 top-9 z-10 flex items-start justify-between px-4 sm:top-12 sm:px-8 [--card-w:clamp(1.4rem,3.8vw,1.9rem)]">
+          <DiscardTray fill={shoeUsed} />
+          <ShoeBlock fill={1 - shoeUsed} />
+        </div>
+
+        <TableCamera focus={revealing ? "dealer" : settled ? "result" : "wide"}>
         <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-8 overflow-y-auto px-4 py-12 sm:px-9">
           <div className="grid w-full max-w-2xl grid-cols-2 gap-6 sm:gap-12">
             {(["player", "banker"] as const).map((side) => {
@@ -363,8 +426,12 @@ function BaccaratTable() {
                     {side}
                   </span>
                   <div className="flex min-h-[calc(clamp(2.8rem,9vw,4.2rem)*1.4)] items-center [--card-w:clamp(2.8rem,9vw,4.2rem)]">
-                    {cards.length > 0 ? (
-                      <CardRow cards={cards} />
+                    {(side === "player" ? shown.player : shown.banker) > 0 ? (
+                      <CardRow
+                        cards={cards}
+                        visible={side === "player" ? shown.player : shown.banker}
+                        square
+                      />
                     ) : (
                       <span className="font-mono text-[9px] tracking-[0.18em] text-[rgba(236,229,216,0.2)] uppercase">
                         Waiting
@@ -458,6 +525,7 @@ function BaccaratTable() {
             </div>
           ) : null}
         </div>
+        </TableCamera>
 
         <AnimatePresence>
           {settled && mode === "learn" && round ? (

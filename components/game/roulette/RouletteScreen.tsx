@@ -51,6 +51,9 @@ export function RouletteScreen() {
   const [bets, setBets] = useState<RouletteBet[]>([]);
   const [result, setResult] = useState<Pocket | null>(null);
   const [spinning, setSpinning] = useState(false);
+  /* Increments the moment a spin begins, which is what gives the ball its
+     revolutions and lets it stay put when the table is swept afterwards. */
+  const [turn, setTurn] = useState(0);
   const [settlements, setSettlements] = useState<BetSettlement[] | null>(null);
   const [spins, setSpins] = useState(0);
   const [history, setHistory] = useState<Pocket[]>([]);
@@ -108,6 +111,7 @@ export function RouletteScreen() {
     playSound("deal");
     setBankroll((current) => current - staked);
     setSpinning(true);
+    setTurn((current) => current + 1);
     const pocket = spin(variant);
     setResult(pocket);
 
@@ -374,7 +378,13 @@ export function RouletteScreen() {
         <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-12 sm:px-8">
           <div className="flex w-full max-w-4xl flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-center lg:gap-10">
             <div className="flex shrink-0 flex-col items-center gap-3">
-              <RouletteWheel variant={variant} result={result} spinning={spinning} />
+              <RouletteWheel
+                variant={variant}
+                result={result}
+                ballAt={result ?? history[0] ?? null}
+                spinning={spinning}
+                turn={turn}
+              />
               {history.length > 0 ? (
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="flex flex-wrap justify-center gap-1">

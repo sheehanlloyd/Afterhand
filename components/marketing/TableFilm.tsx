@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { PlayingCard } from "@/components/cards/PlayingCard";
+import { DeckBlock } from "@/components/game/table/DeckBlock";
+import { TableSpaceProvider, useTableAnchor } from "@/lib/motion/table-space";
 import { ChipFace } from "@/components/chips/Chip";
 import { FilmCard, FilmFrame, FilmScript, FilmSeat } from "@/lib/content/films";
 import { Card } from "@/types";
@@ -56,6 +58,10 @@ function Seat({
             card={toCard(seatKey, position, entry)}
             faceDown={entry.faceDown}
             index={position}
+            /* Tighter than a real table: the film has a second and a half to
+               show a whole hand, so the deal is quick rather than measured. */
+            delay={position * 90}
+            short
             className={position > 0 && align === "bottom" ? "-ml-3 rotate-[4deg]" : undefined}
           />
         ))}
@@ -97,6 +103,20 @@ function Pocket({ pocket }: { pocket: NonNullable<FilmFrame["pocket"]> }) {
     >
       {pocket.label}
     </motion.span>
+  );
+}
+
+/** The deck the film deals from, drawn small in the corner of the felt. */
+function FilmShoe() {
+  const anchor = useTableAnchor("shoe");
+  return (
+    <div
+      ref={anchor}
+      aria-hidden="true"
+      className="absolute top-5 right-5 [--card-w:1.5rem] sm:top-7 sm:right-8 sm:[--card-w:1.8rem]"
+    >
+      <DeckBlock fill={0.8} />
+    </div>
   );
 }
 
@@ -161,7 +181,13 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
         className="felt relative aspect-[5/4] w-full overflow-hidden border border-[rgba(201,167,94,0.28)] shadow-[0_36px_70px_-46px_rgba(0,0,0,0.85)] sm:aspect-[16/12]"
         style={{ ["--film-card-min" as string]: "4.4rem" }}
       >
+        <TableSpaceProvider>
         <div className="absolute inset-3 border border-[rgba(201,167,94,0.14)]" />
+
+        {/* The film's shoe. Small, unlabelled, and off to one side, but every
+            card in the hand below comes out of it, which is the whole reason
+            the deal reads as dealing. */}
+        <FilmShoe />
 
         {/* Frame progress, as a strip of exposure marks. */}
         <div className="absolute top-0 right-0 left-0 z-20 flex gap-[3px] p-3">
@@ -270,6 +296,7 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
             </motion.p>
           </AnimatePresence>
         </div>
+        </TableSpaceProvider>
       </div>
 
       <figcaption className="mt-3 flex items-center justify-between gap-4 font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase">
