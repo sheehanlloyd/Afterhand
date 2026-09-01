@@ -24,10 +24,14 @@ export function deckThickness(fraction: number): number {
 function edgeShadow(layers: number): string {
   const parts: string[] = [];
   for (let i = 1; i <= layers; i++) {
-    const tone = i % 2 === 0 ? "rgba(232,224,206,0.5)" : "rgba(14,32,26,0.9)";
-    parts.push(`${i * 0.5}px ${i * 0.8}px 0 -0.5px ${tone}`);
+    /* Alternating card and edge, which is what a stack looks like from above.
+       The offsets are generous because the shoe is drawn small: at thirty
+       pixels wide a subtle stack is indistinguishable from a single card, and
+       the whole point of the block is that you can see it emptying. */
+    const tone = i % 2 === 0 ? "rgba(238,230,212,0.6)" : "rgba(10,26,21,0.95)";
+    parts.push(`${i * 0.8}px ${i * 1.15}px 0 -0.4px ${tone}`);
   }
-  parts.push("6px 12px 16px -6px rgba(0,0,0,0.6)");
+  parts.push(`${layers * 0.8 + 4}px ${layers * 1.15 + 7}px 14px -6px rgba(0,0,0,0.7)`);
   return parts.join(", ");
 }
 
@@ -73,13 +77,11 @@ export function DeckBlock({
       animate={{ boxShadow: edgeShadow(layers) }}
       transition={{ duration: 0.3 }}
     >
+      {/* One inset rule and nothing else. A woven pattern at this size is
+          noise rather than texture. */}
       <span
-        className="absolute inset-[10%] rounded-[5%] border"
-        style={{
-          borderColor: "rgba(194,166,107,0.3)",
-          backgroundImage:
-            "repeating-linear-gradient(45deg, rgba(194,166,107,0.14) 0 1px, transparent 1px 6px)",
-        }}
+        className="absolute inset-[12%] rounded-[5%] border"
+        style={{ borderColor: "rgba(194,166,107,0.34)" }}
       />
       <span
         className="absolute inset-0"
