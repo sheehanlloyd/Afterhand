@@ -1,6 +1,7 @@
 "use client";
 
 import { Chip } from "@/components/chips/Chip";
+import { useTableAnchor } from "@/lib/motion/table-space";
 import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/utils/format";
 import { PlayerAction } from "@/lib/games/blackjack/types";
@@ -87,6 +88,9 @@ export function BettingRail({
   showHints: boolean;
 }) {
   const chips = CHIP_DENOMINATIONS.filter((value) => value <= maxBet);
+  /* The tray is where the player's own money physically lives on this screen,
+     so it is the origin every chip that reaches the felt travels from. */
+  const railAnchor = useTableAnchor("rail");
 
   return (
     <BetRailLayout
@@ -97,7 +101,10 @@ export function BettingRail({
         </>
       }
       chips={
-        <div className="flex flex-wrap justify-center gap-2.5 [--chip-w:2.9rem] sm:gap-2.5 sm:[--chip-w:3rem]">
+        <div
+          ref={railAnchor}
+          className="flex flex-wrap justify-center gap-2.5 [--chip-w:2.9rem] sm:gap-2.5 sm:[--chip-w:3rem]"
+        >
           {chips.map((value) => (
             <Chip
               key={value}

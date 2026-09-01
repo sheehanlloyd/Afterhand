@@ -20,6 +20,9 @@ import { BlackjackTable } from "./BlackjackTable";
 import { ActionRail, BettingRail, InsuranceRail, SettledRail } from "./Rails";
 import { formatMoney } from "@/lib/utils/format";
 import { ChipDragProvider } from "@/components/chips/chip-drag";
+import { ChipFlightLayer, useChipFlight } from "@/components/chips/ChipFlight";
+import { TableSpaceProvider } from "@/lib/motion/table-space";
+import { CHIP_DENOMINATIONS } from "./Rails";
 
 const ACTION_KEYS: Record<string, PlayerAction> = {
   h: "hit",
@@ -43,16 +46,6 @@ export function BlackjackScreen() {
     // Recovery is checked once when the setup screen first mounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const actions = useMemo(() => (game ? availableActions(game) : []), [game]);
-  const isBusy = store.revealing;
-
-  const handleAction = useCallback(
-    (action: PlayerAction) => {
-      store.act(action);
-    },
-    [store],
-  );
 
   /* Keyboard shortcuts, ignored while a field has focus. */
   useEffect(() => {
@@ -128,13 +121,91 @@ export function BlackjackScreen() {
 
   if (!game) return null;
 
+  return (
+    <TableSpaceProvider>
+      <ChipFlightLayer>
+        <ChipDragProvider>
+          <PlayingRoom
+            rulesOpen={rulesOpen}
+            setRulesOpen={setRulesOpen}
+            confirmExit={confirmExit}
+            setConfirmExit={setConfirmExit}
+            confirmRestart={confirmRestart}
+            setConfirmRestart={setConfirmRestart}
+          />
+        </ChipDragProvider>
+      </ChipFlightLayer>
+    </TableSpaceProvider>
+  );
+}
+
+/**
+ * The table itself, inside the providers.
+ *
+ * Split out so that it can reach the chip flight layer above it: a chip that
+ * leaves the rail for the betting circle is drawn by a component that has to be
+ * a parent of both of them.
+ */
+function PlayingRoom({
+  rulesOpen,
+  setRulesOpen,
+  confirmExit,
+  setConfirmExit,
+  confirmRestart,
+  setConfirmRestart,
+}: {
+  rulesOpen: boolean;
+  setRulesOpen: (value: boolean) => void;
+  confirmExit: boolean;
+  setConfirmExit: (value: boolean) => void;
+  confirmRestart: boolean;
+  setConfirmRestart: (value: boolean) => void;
+}) {
+  const store = useBlackjackSession();
+  const { preferences, update } = usePreferences();
+  const flight = useChipFlight();
+  const { game, mode } = store;
+
+  const actions = useMemo(() => (game ? availableActions(game) : []), [game]);
+
+  const handleAction = useCallback(
+    (action: PlayerAction) => {
+      store.act(action);
+    },
+    [store],
+  );
+
+  /**
+   * A chip does not become a bet until it has arrived.
+   *
+   * The clay leaves the rail, crosses the felt and lands in the circle, and
+   * only then does the wagered amount change. It is the same rule the pot
+   * follows in poker, and it is what stops the interface reading as a
+   * spreadsheet with a table drawn behind it.
+   */
+  const placeChip = useCallback(
+    (value: number) => {
+      flight.send({
+        from: "rail",
+        to: "bet:main",
+        amount: value,
+        denominations: CHIP_DENOMINATIONS,
+        onArrive: () => store.addChip(value),
+      });
+    },
+    [flight, store],
+  );
+
+  if (!game) return null;
+
+  const isBusy = store.revealing || store.collecting;
   const roundNet = game.phase === "settled" ? netForRound(game) : 0;
   const activeHand = game.hands[game.activeHandIndex];
   const insuranceCost = Math.floor((game.hands[0]?.bet ?? 0) / 2);
   const meaningfulSession = store.history.length > 0 || game.phase !== "betting";
 
   return (
-    <ChipDragProvider>
+    <>
       <GameFrame
         header={
         <GameHeader
@@ -183,7 +254,7 @@ export function BlackjackScreen() {
             maxBet={Math.min(game.rules.maxBet, game.bankroll)}
             canDeal={canDeal(game)}
             canRepeat={store.history.length > 0 && game.pendingBet === 0}
-            onChip={store.addChip}
+            onChip={placeChip}
             onClear={store.clearBet}
             onRepeat={store.repeatBet}
             onDeal={store.deal}
@@ -222,9 +293,10 @@ export function BlackjackScreen() {
     >
       <BlackjackTable
         game={game}
-        dealerShown={store.dealerShown}
+        visible={store.visible}
         holeUp={store.holeUp}
         resultVisible={store.resultVisible}
+        collecting={store.collecting}
       />
 
       <AnimatePresence>
@@ -299,6 +371,6 @@ export function BlackjackScreen() {
         }
       />
       </GameFrame>
-    </ChipDragProvider>
+    </>
   );
 }

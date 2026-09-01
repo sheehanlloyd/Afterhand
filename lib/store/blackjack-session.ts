@@ -12,8 +12,18 @@ import * as engine from "@/lib/games/blackjack/engine";
 import { calculateHandValue } from "@/lib/games/blackjack/hand";
 import { bettingNote } from "@/lib/strategy/blackjack-coach";
 import { applyDecisions, loadBlackjackLearning, saveBlackjackLearning } from "@/lib/storage/learning";
-import { playSound } from "@/lib/sound";
+import { playSound, playSoundIn } from "@/lib/sound";
 import { readSession, removeSession, writeSession } from "@/lib/storage/storage";
+import { cutCardReached } from "@/lib/games/deck";
+import { useDealer } from "@/lib/store/dealer";
+import {
+  applyStep,
+  clampCounts,
+  emptyCounts,
+  revealSteps,
+  type RevealCounts,
+} from "@/lib/motion/deal-order";
+import { DURATION, RHYTHM } from "@/lib/motion/tokens";
 
 const RECOVERY_KEY = "afterhand.session.blackjack";
 
@@ -53,9 +63,11 @@ interface BlackjackSessionStore {
   endedAt: number | null;
   game: BlackjackState | null;
   history: HandSummary[];
-  /** Reveal choreography. */
-  dealerShown: number;
+  /** Reveal choreography: how much of the table has physically been dealt. */
+  visible: RevealCounts;
   holeUp: boolean;
+  /** True while the dealer is sweeping the finished hands into the tray. */
+  collecting: boolean;
   resultVisible: boolean;
   revealing: boolean;
   reviewOpen: boolean;
@@ -125,35 +137,81 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
     writeSession(RECOVERY_KEY, payload);
   }
 
+  function countsFor(game: BlackjackState): RevealCounts {
+    const hands: Record<string, number> = {};
+    for (const hand of game.hands) hands[hand.id] = hand.cards.length;
+    return { dealer: game.dealer.cards.length, hands };
+  }
+
+  /**
+   * Puts the cards the game says are on the table onto the table, in the order
+   * a dealer would put them there.
+   *
+   * The engine hands us a finished position: both of the player's cards and
+   * both of the dealer's, all at once. Showing them all at once is what makes
+   * software tables feel like software. So the state is diffed against what is
+   * physically on the felt and the difference is dealt out on a rhythm.
+   *
+   * Returns the time, in milliseconds from now, at which the last card lands.
+   */
+  function runReveal(game: BlackjackState, startAt: number): number {
+    const target = countsFor(game);
+    const base = clampCounts(get().visible, target);
+    set({ visible: base });
+
+    const steps = revealSteps(base, target, game.hands.map((hand) => hand.id));
+    if (steps.length === 0) return startAt;
+
+    let counts = base;
+    let at = startAt;
+    for (const step of steps) {
+      counts = applyStep(counts, step);
+      const snapshot = counts;
+      schedule(() => {
+        set({ visible: snapshot });
+        playSound("deal");
+        /* The card lands about four fifths of the way through its flight, and
+           the felt should be heard at that moment rather than at the flick. */
+        playSoundIn("land", Math.round(DURATION.deal * 780));
+      }, at);
+      at += RHYTHM.betweenCards + (step.kind === "dealer" ? RHYTHM.beforeDealer : 0);
+    }
+
+    return at - RHYTHM.betweenCards + DURATION.deal * 1000;
+  }
+
   /** Runs the dealer reveal, then shows the outcome and stores the review. */
   function runSettleSequence(game: BlackjackState) {
     clearTimers();
-    const extras = Math.max(0, game.dealer.cards.length - 2);
-    set({ dealerShown: 2, holeUp: false, resultVisible: false, revealing: true });
+    const target = countsFor(game);
+    set({
+      visible: clampCounts(get().visible, target),
+      holeUp: false,
+      resultVisible: false,
+      revealing: true,
+    });
+    useDealer.getState().enter("revealing");
 
-    let elapsed = 320;
+    /* The hole card is turned before the dealer draws to it, which is both what
+       happens at a table and what gives the reveal its beat. */
     schedule(() => {
       set({ holeUp: true });
       playSound("flip");
-    }, elapsed);
+    }, RHYTHM.beforeReveal);
 
-    for (let index = 0; index < extras; index++) {
-      elapsed += 420;
-      const shown = 3 + index;
-      schedule(() => {
-        set({ dealerShown: shown });
-        playSound("deal");
-      }, elapsed);
-    }
+    const drawn = runReveal(game, RHYTHM.beforeReveal + DURATION.flip * 1000 + 140);
 
-    elapsed += 430;
     schedule(() => {
       const state = get();
       const summary = buildSummary(game, state.startingBankroll);
       if (state.mode === "learn" && summary.decisions.length > 0) {
         saveBlackjackLearning(applyDecisions(loadBlackjackLearning(), summary.decisions));
       }
-      playSound(summary.net > 0 ? "win" : summary.net < 0 ? "lose" : "click");
+      const blackjack = summary.results.some((entry) => entry.outcome === "blackjack");
+      playSound(
+        blackjack ? "bigWin" : summary.net > 0 ? "win" : summary.net < 0 ? "lose" : "click",
+      );
+      useDealer.getState().enter("idle");
       set({
         resultVisible: true,
         revealing: false,
@@ -162,7 +220,7 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
         reviewOpen: state.mode === "learn" && summary.decisions.length > 0,
       });
       persistRecovery({});
-    }, elapsed);
+    }, drawn + 300);
   }
 
   function applyGame(next: BlackjackState, previous: BlackjackState | null) {
@@ -172,13 +230,27 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
       runSettleSequence(next);
       return;
     }
+
     set({
       game: next,
-      dealerShown: next.dealer.cards.length,
       holeUp: next.dealer.holeRevealed,
       resultVisible: false,
-      revealing: false,
     });
+
+    const lands = runReveal(next, 0);
+    if (lands <= 0) {
+      set({ revealing: false });
+      return;
+    }
+
+    /* The controls stay locked until the last card is down. A hand you can act
+       on before the dealer has finished dealing it is not a hand. */
+    useDealer.getState().enter("dealing");
+    set({ revealing: true });
+    schedule(() => {
+      set({ revealing: false });
+      useDealer.getState().enter("waiting");
+    }, lands);
   }
 
   return {
@@ -190,8 +262,9 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
     endedAt: null,
     game: null,
     history: [],
-    dealerShown: 0,
+    visible: emptyCounts(),
     holeUp: false,
+    collecting: false,
     resultVisible: false,
     revealing: false,
     reviewOpen: false,
@@ -245,8 +318,9 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
         endedAt: null,
         game,
         history: [],
-        dealerShown: 0,
+        visible: emptyCounts(),
         holeUp: false,
+        collecting: false,
         resultVisible: false,
         revealing: false,
         reviewOpen: false,
@@ -291,7 +365,29 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
     deal: () => {
       const state = get();
       const game = state.game;
-      if (!game || state.revealing || !engine.canDeal(game)) return;
+      if (!game || state.revealing || state.collecting || !engine.canDeal(game)) return;
+
+      /* The engine reshuffles silently when the cut card has come out. If that
+         is about to happen, the dealer performs the shuffle first and the deal
+         waits for it, because a shoe that reloads itself between one hand and
+         the next is the least believable thing a card game can do. */
+      const shuffling = game.shoe.needsShuffle || cutCardReached(game.shoe);
+      const wait = shuffling ? useDealer.getState().shuffleSequence() : 0;
+
+      if (shuffling) {
+        set({ revealing: true });
+        schedule(() => {
+          const current = get().game;
+          if (!current) return;
+          useDealer.getState().enter("dealing");
+          playSound("deal");
+          applyGame(engine.deal(current), current);
+          persistRecovery({});
+        }, wait + 120);
+        return;
+      }
+
+      useDealer.getState().enter("dealing");
       playSound("deal");
       applyGame(engine.deal(game), game);
       persistRecovery({});
@@ -332,14 +428,28 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
         removeSession(RECOVERY_KEY);
         return;
       }
-      set({
-        game: engine.nextRound(game),
-        reviewOpen: false,
-        resultVisible: false,
-        holeUp: false,
-        dealerShown: 0,
-      });
-      persistRecovery({});
+      /* The dealer gathers the cards and pushes them into the tray. The next
+         round does not begin until the felt is actually clear. */
+      useDealer.getState().enter("collecting");
+      playSound("sweep");
+      set({ collecting: true, reviewOpen: false });
+
+      const cards =
+        game.dealer.cards.length +
+        game.hands.reduce((total, hand) => total + hand.cards.length, 0);
+      const sweep = DURATION.deal * 1000 + cards * RHYTHM.betweenCollect;
+
+      schedule(() => {
+        useDealer.getState().enter("idle");
+        set({
+          game: engine.nextRound(game),
+          collecting: false,
+          resultVisible: false,
+          holeUp: false,
+          visible: emptyCounts(),
+        });
+        persistRecovery({});
+      }, sweep);
     },
 
     openReview: () => set({ reviewOpen: true }),
@@ -347,8 +457,15 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
 
     endSession: () => {
       clearTimers();
+      useDealer.getState().reset();
       removeSession(RECOVERY_KEY);
-      set({ status: "summary", endedAt: Date.now(), reviewOpen: false, revealing: false });
+      set({
+        status: "summary",
+        endedAt: Date.now(),
+        reviewOpen: false,
+        revealing: false,
+        collecting: false,
+      });
     },
 
     restartSession: () => {
@@ -363,10 +480,14 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
 
     leaveSession: () => {
       clearTimers();
+      useDealer.getState().reset();
       removeSession(RECOVERY_KEY);
       set({
         status: "setup",
         game: null,
+        visible: emptyCounts(),
+        collecting: false,
+        revealing: false,
         history: [],
         endedAt: null,
         reviewOpen: false,

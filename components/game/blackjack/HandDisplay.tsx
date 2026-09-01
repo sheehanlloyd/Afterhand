@@ -1,12 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Card } from "@/types";
 import { PlayingCard } from "@/components/cards/PlayingCard";
 import { calculateHandValue } from "@/lib/games/blackjack/hand";
 import { HandResult } from "@/lib/games/blackjack/types";
 import { formatMoney } from "@/lib/utils/format";
 import { BetStack } from "@/components/chips/Chip";
+import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
+import { wobbleOf } from "@/lib/motion/jitter";
+import { useTableAnchor } from "@/lib/motion/table-space";
 import { cn } from "@/lib/utils/cn";
 
 export function TotalPlate({
@@ -36,7 +39,20 @@ export function TotalPlate({
         className,
       )}
     >
-      <span className="tabular text-[13px] leading-none font-medium">{label}</span>
+      {/* The total counts rather than jumps, so a hit reads as the hand
+          changing value and not as a different number appearing. */}
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={label}
+          initial={{ opacity: 0, y: -7 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 7 }}
+          transition={{ duration: DURATION.turn, ease: EASE.arrive }}
+          className="tabular text-[13px] leading-none font-medium"
+        >
+          {label}
+        </motion.span>
+      </AnimatePresence>
       {!hidden && value.soft && !value.busted ? (
         <span className="font-mono text-[8.5px] tracking-[0.12em] uppercase opacity-70">Soft</span>
       ) : null}
@@ -53,29 +69,59 @@ export function CardRow({
   cards,
   faceDownFrom,
   className,
+  /**
+   * How many of these cards have physically been dealt. Anything beyond this is
+   * still in the shoe and is not rendered at all.
+   */
+  visible,
+  /** Table anchor the cards fly in from. */
+  origin = "shoe",
+  /** True while the dealer is sweeping the hand into the discard tray. */
+  leaving = false,
+  /** Short flights, for hit cards and community cards. */
+  short = false,
+  /** A neat fan rather than a scattered pile. */
+  square = false,
 }: {
   cards: Card[];
-  /** Index from which cards are shown face down. */
   faceDownFrom?: number;
   className?: string;
+  visible?: number;
+  origin?: string;
+  leaving?: boolean;
+  short?: boolean;
+  square?: boolean;
 }) {
+  const shown = visible === undefined ? cards : cards.slice(0, Math.max(0, visible));
+
   return (
     <div className={cn("flex items-start", className)}>
-      {cards.map((card, index) => (
-        <div
+      {shown.map((card, index) => (
+        <motion.div
           key={card.id}
+          layout
+          transition={SPRING.ui}
           style={{
-            marginLeft: index === 0 ? 0 : "calc(var(--card-w) * -0.34)",
+            /* Cards overlap by roughly a third, but not by exactly a third:
+               a hand where every card sits at the same offset looks printed. */
+            marginLeft:
+              index === 0
+                ? 0
+                : `calc(var(--card-w) * ${(-0.34 + wobbleOf(card.id, "lap") * 0.035).toFixed(3)})`,
             zIndex: index,
           }}
         >
           <PlayingCard
             card={card}
             index={index}
+            delay={0}
+            origin={origin}
+            short={short || index > 1}
+            square={square}
+            leaving={leaving}
             faceDown={faceDownFrom !== undefined && index >= faceDownFrom}
-            className={index === 0 ? undefined : "rotate-[2deg]"}
           />
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -101,6 +147,10 @@ export function PlayerHand({
   result,
   denominations,
   doubled,
+  visible,
+  leaving,
+  standing,
+  anchor,
 }: {
   cards: Card[];
   bet: number;
@@ -110,15 +160,24 @@ export function PlayerHand({
   result?: HandResult;
   denominations: number[];
   doubled?: boolean;
+  visible?: number;
+  leaving?: boolean;
+  /** The hand has been stood on and is waiting for the dealer. */
+  standing?: boolean;
+  /** Table anchor name for this hand's wager, so winnings can be paid to it. */
+  anchor?: string;
 }) {
   const value = calculateHandValue(cards);
   const outcome = result ? OUTCOME_COPY[result.outcome] : null;
+  const isBlackjack = result?.outcome === "blackjack";
+  const busted = value.busted;
+  const betAnchor = useTableAnchor(anchor ?? "bet:unattached");
 
   return (
     <motion.div
       layout
       className={cn(
-        "flex flex-col items-center gap-2.5 transition-opacity duration-300",
+        "relative flex flex-col items-center gap-2.5 transition-opacity duration-300",
         dimmed && "opacity-45",
       )}
     >
@@ -134,7 +193,60 @@ export function PlayerHand({
       ) : null}
 
       <div className="relative">
-        <CardRow cards={cards} />
+        {/* The seat itself brightens when it is your turn: a pool of light on
+            the felt under the hand rather than a border drawn around it. */}
+        <AnimatePresence>
+          {active ? (
+            <motion.span
+              key="seat-light"
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-x-6 -inset-y-8 -z-10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0.55, 0.85, 0.55] }}
+              exit={{ opacity: 0 }}
+              transition={{
+                opacity: { duration: 3.4, repeat: Infinity, ease: EASE.drift },
+              }}
+              style={{
+                background:
+                  "radial-gradient(closest-side, rgba(201,167,94,0.16), rgba(201,167,94,0) 78%)",
+              }}
+            />
+          ) : null}
+        </AnimatePresence>
+
+        {/* A blackjack gets a slow sweep of light across the cards. It is the
+            best hand in the game and it should look like it, without the
+            screen doing anything a room full of adults would find embarrassing. */}
+        <AnimatePresence>
+          {isBlackjack ? (
+            <motion.span
+              key="bj-sweep"
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-2 -z-10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: DURATION.reveal }}
+              style={{
+                background:
+                  "radial-gradient(closest-side, rgba(201,167,94,0.3), rgba(201,167,94,0) 76%)",
+              }}
+            />
+          ) : null}
+        </AnimatePresence>
+
+        <motion.div
+          animate={{
+            /* A bust hand is pushed back rather than flashed red. */
+            opacity: busted && result ? 0.62 : 1,
+            filter: busted && result ? "saturate(0.45)" : "saturate(1)",
+          }}
+          transition={{ duration: DURATION.reveal, ease: EASE.arrive }}
+        >
+          <CardRow cards={cards} visible={visible} leaving={leaving} />
+        </motion.div>
+
         {active ? (
           <motion.span
             layoutId="active-hand-marker"
@@ -144,10 +256,10 @@ export function PlayerHand({
         ) : null}
       </div>
 
-      <TotalPlate cards={cards} tone={value.busted ? "bust" : "default"} />
+      <TotalPlate cards={cards} tone={busted ? "bust" : "default"} />
 
       <div className="flex flex-col items-center gap-1.5">
-        <div className="[--chip-w:2rem]">
+        <div ref={betAnchor} className="[--chip-w:2rem]">
           <BetStack amount={bet} denominations={denominations} />
         </div>
         <span className="tabular text-[11px] text-[rgba(236,229,216,0.6)]">
@@ -160,29 +272,47 @@ export function PlayerHand({
         </span>
       </div>
 
-      {outcome ? (
-        <motion.span
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.24 }}
-          className={cn(
-            "border px-2 py-[3px] font-mono text-[9.5px] tracking-[0.14em] uppercase",
-            outcome.tone === "win"
-              ? "border-positive/60 text-positive"
-              : outcome.tone === "lose"
-                ? "border-negative/55 text-negative"
-                : "border-[rgba(236,229,216,0.3)] text-[rgba(236,229,216,0.75)]",
-          )}
-        >
-          {outcome.text}
-          {result && result.net !== 0 ? (
-            <span className="tabular ml-1.5">
-              {result.net > 0 ? "+" : ""}
-              {formatMoney(result.net)}
-            </span>
-          ) : null}
-        </motion.span>
-      ) : null}
+      <AnimatePresence mode="wait">
+        {outcome ? (
+          <motion.span
+            key="outcome"
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={SPRING.ui}
+            className={cn(
+              "border px-2 py-[3px] font-mono text-[9.5px] tracking-[0.14em] uppercase",
+              isBlackjack && "border-accent-2 text-accent-2 shadow-[0_0_18px_-4px_rgba(201,167,94,0.7)]",
+              !isBlackjack && outcome.tone === "win"
+                ? "border-positive/60 text-positive"
+                : !isBlackjack && outcome.tone === "lose"
+                  ? "border-negative/55 text-negative"
+                  : !isBlackjack
+                    ? "border-[rgba(236,229,216,0.3)] text-[rgba(236,229,216,0.75)]"
+                    : "",
+            )}
+          >
+            {outcome.text}
+            {result && result.net !== 0 ? (
+              <span className="tabular ml-1.5">
+                {result.net > 0 ? "+" : ""}
+                {formatMoney(result.net)}
+              </span>
+            ) : null}
+          </motion.span>
+        ) : standing ? (
+          <motion.span
+            key="standing"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: DURATION.turn, ease: EASE.arrive }}
+            className="border border-[rgba(236,229,216,0.24)] px-2 py-[3px] font-mono text-[9.5px] tracking-[0.18em] text-[rgba(236,229,216,0.6)] uppercase"
+          >
+            Stand
+          </motion.span>
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }
