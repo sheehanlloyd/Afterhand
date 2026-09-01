@@ -80,6 +80,13 @@ interface PokerSessionStore {
    * changed it have finished crossing the table.
    */
   potShown: number;
+  /**
+   * Which opponent is deciding, and the window they have to do it in.
+   *
+   * Exposed so the seat can draw a countdown against a deadline that actually
+   * exists. The human is never on a clock, so the human never appears here.
+   */
+  thinking: { playerId: string; startedAt: number; endsAt: number } | null;
 
   start: (config: PokerSessionConfig) => void;
   deal: () => void;
@@ -166,8 +173,13 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
     for (const step of steps) {
       counts = applyStep(counts, step);
       const snapshot = counts.hands;
+      /* Which way the dealing hand has to go to reach this seat, from -1 at the
+         far left of the felt to +1 at the far right. */
+      const seat = step.kind === "dealer" ? -1 : order.indexOf(step.id);
+      const focus = seat < 0 || order.length < 2 ? 0 : (seat / (order.length - 1)) * 1.4 - 0.7;
       schedule(() => {
         set({ reveal: { ...get().reveal, hole: snapshot } });
+        useDealer.getState().enter("dealing", { focus });
         playSound("deal");
         playSoundIn("land", Math.round(DURATION.dealShort * 780));
       }, at);
@@ -201,16 +213,19 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
     /* The burn. One card off the top, face down, into the muck. */
     schedule(() => {
       set({ reveal: { ...get().reveal, burn: get().reveal.burn + 1 } });
+      useDealer.getState().enter("dealing", { focus: -0.9 });
       playSound("deal");
     }, at);
     at += 260;
 
-    useDealer.getState().enter("dealing");
-
+    /* The community cards fan out from the middle, so each one is thrown a
+       little further right than the last. */
     for (let index = 0; index < fresh; index++) {
       const shown = reveal.board + index + 1;
+      const spread = fresh < 2 ? 0 : (index / (fresh - 1)) * 0.5 - 0.25;
       schedule(() => {
         set({ reveal: { ...get().reveal, board: shown } });
+        useDealer.getState().enter("dealing", { focus: spread });
         playSound("deal");
         playSoundIn("land", Math.round(DURATION.dealShort * 780));
       }, at);
@@ -223,6 +238,7 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
       const up = reveal.board + index + 1;
       schedule(() => {
         set({ reveal: { ...get().reveal, faceUp: up } });
+        useDealer.getState().enter("revealing");
         playSound("flip");
       }, at);
       at += 90;
@@ -356,12 +372,13 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
         useDealer.getState().enter("idle");
       }, shownBy + 320);
 
-      set({ waiting: true });
+      set({ waiting: true, thinking: null });
       return;
     }
 
     const acting = engine.currentPlayer(table);
     if (!acting || acting.isHuman) {
+      set({ thinking: null });
       /* The human may act as soon as the cards for this street are down. */
       if (afterBoard > 0) {
         set({ waiting: true });
@@ -372,14 +389,20 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
       return;
     }
 
-    set({ waiting: true });
+    const think = thinkingTime();
+    const startedAt = Date.now() + afterBoard;
+    set({
+      waiting: true,
+      thinking: { playerId: acting.id, startedAt, endsAt: startedAt + think },
+    });
     schedule(() => {
       const current = get().table;
       if (!current) return;
       const action = decideAction(current);
       playSound(action.type === "fold" ? "click" : "chip");
+      set({ thinking: null });
       pump(engine.applyAction(current, action));
-    }, afterBoard + thinkingTime());
+    }, afterBoard + think);
   }
 
   return {
@@ -396,6 +419,7 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
     reveal: EMPTY_REVEAL,
     dealing: false,
     potShown: 0,
+    thinking: null,
 
     start: (config) => {
       clearTimers();
@@ -419,6 +443,7 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
         reveal: EMPTY_REVEAL,
         dealing: false,
         potShown: 0,
+      thinking: null,
       });
     },
 
@@ -475,6 +500,7 @@ export const usePokerSession = create<PokerSessionStore>((set, get) => {
         reveal: EMPTY_REVEAL,
         dealing: false,
         potShown: 0,
+      thinking: null,
       });
     },
   };

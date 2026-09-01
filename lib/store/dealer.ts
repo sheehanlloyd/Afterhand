@@ -31,6 +31,17 @@ export type DealerState =
 /** The ways a deck gets mixed. Each has its own animation and its own sound. */
 export type ShuffleVariant = "riffle" | "strip" | "table-riffle" | "running-cuts" | "wash";
 
+/**
+ * Where the dealer's hands are pointed.
+ *
+ * -1 is the far left of the felt and +1 the far right, so a deal to the third
+ * seat swings the arm further than a deal to the dealer's own box. Games pass
+ * it when they know; anything that does not simply gets a deal straight ahead.
+ */
+export interface DealerIntent {
+  focus?: number;
+}
+
 const SHUFFLE_VARIANTS: ShuffleVariant[] = [
   "riffle",
   "riffle",
@@ -63,7 +74,9 @@ interface DealerStore {
   beat: number;
   /** True for the one round in fourteen where the dealer shows off a little. */
   flourish: boolean;
-  enter: (state: DealerState) => void;
+  /** -1 (far left of the felt) to +1 (far right). Where the hands are aimed. */
+  focus: number;
+  enter: (state: DealerState, intent?: DealerIntent) => void;
   /** Runs preparing → shuffling → cutting → idle, and reports the total time. */
   shuffleSequence: () => number;
   reset: () => void;
@@ -85,13 +98,20 @@ export const useDealer = create<DealerStore>((set, get) => ({
   variant: "riffle",
   beat: 0,
   flourish: false,
+  focus: 0,
 
-  enter: (state) => {
+  enter: (state, intent) => {
     set((current) => ({
       state,
       beat: current.beat + 1,
       variant: state === "shuffling" ? pick(SHUFFLE_VARIANTS) : current.variant,
       flourish: state === "idle" ? Math.random() < FLOURISH_CHANCE : current.flourish,
+      focus:
+        intent?.focus === undefined
+          ? state === "dealing"
+            ? current.focus
+            : 0
+          : Math.max(-1, Math.min(1, intent.focus)),
     }));
   },
 
@@ -143,6 +163,6 @@ export const useDealer = create<DealerStore>((set, get) => ({
 
   reset: () => {
     clearTimers();
-    set({ state: "idle", beat: 0, flourish: false });
+    set({ state: "idle", beat: 0, flourish: false, focus: 0 });
   },
 }));

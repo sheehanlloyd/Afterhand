@@ -11,6 +11,7 @@ import { formatMoney } from "@/lib/utils/format";
 import { CHIP_DENOMINATIONS } from "./Rails";
 import { cardsRemaining } from "@/lib/games/deck";
 import { DealerActivity, DiscardTray, Shoe } from "@/components/game/table/DealerStation";
+import { Dealer } from "@/components/game/table/Dealer";
 import { TableCamera, type CameraFocus } from "@/components/game/table/TableCamera";
 import { useTableAnchor } from "@/lib/motion/table-space";
 import { useChipFlight } from "@/components/chips/ChipFlight";
@@ -143,6 +144,10 @@ export function BlackjackTable({
             />
 
             <div ref={dealerAnchor} className="flex min-w-0 flex-1 flex-col items-center gap-3">
+              {/* The dealer. Their hands sit just above the cards they are
+                  about to put out, so a flick and the card leaving the shoe are
+                  the same gesture rather than two unrelated animations. */}
+              <Dealer className="-mb-2 w-[clamp(7rem,26vw,11rem)]" />
               <span className="font-mono text-[9px] tracking-[0.26em] text-[rgba(236,229,216,0.42)] uppercase">
                 Dealer
               </span>

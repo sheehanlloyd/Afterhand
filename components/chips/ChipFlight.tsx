@@ -183,11 +183,15 @@ export function ChipFlightLayer({ children }: { children: ReactNode }) {
             >
               <motion.span
                 className="block"
-                /* The wobble as it settles onto whatever is already there. */
-                animate={{ rotate: [0, wobbleOf(chip.key, "wob") * 8, 0] }}
+                /* The wobble as it settles onto whatever is already there.
+                   Two keyframes, not three: a spring *is* the overshoot and
+                   the return, and asking one to hit a midpoint on the way is
+                   both physically meaningless and a hard error in the
+                   animator — one that takes the whole table down with it. */
+                initial={{ rotate: wobbleOf(chip.key, "wob") * 9 }}
+                animate={{ rotate: 0 }}
                 transition={{
                   delay: chip.delay + DURATION.chip * 0.86,
-                  duration: 0.2,
                   ...SPRING.wobble,
                 }}
               >

@@ -322,7 +322,12 @@ export function PokerScreen() {
         )
       }
     >
-      <PokerTable state={table} reveal={store.reveal} potShown={store.potShown} />
+      <PokerTable
+        state={table}
+        reveal={store.reveal}
+        potShown={store.potShown}
+        thinking={store.thinking}
+      />
 
       <AnimatePresence>
         {store.reviewOpen && store.reviewSummary ? (

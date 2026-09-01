@@ -35,6 +35,8 @@ import { Segmented } from "@/components/ui/Segmented";
 import { Field } from "@/components/ui/Field";
 import { BettingBoard } from "./BettingBoard";
 import { RouletteWheel } from "./Wheel";
+import { Dealer } from "@/components/game/table/Dealer";
+import { useDealer } from "@/lib/store/dealer";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils/cn";
@@ -113,6 +115,9 @@ export function RouletteScreen() {
   function doSpin() {
     if (bets.length === 0 || spinning || staked > bankroll) return;
     playSound("deal");
+    /* The croupier sets the wheel going and then waits on it, the same as
+       everyone else at the table. */
+    useDealer.getState().enter("dealing");
     setBankroll((current) => current - staked);
     setSpinning(true);
     setTurn((current) => current + 1);
@@ -130,6 +135,8 @@ export function RouletteScreen() {
         setHistory((current) => [pocket, ...current].slice(0, 24));
         const net = outcome.reduce((sum, entry) => sum + entry.net, 0);
         playSound(net > 0 ? "win" : net < 0 ? "lose" : "click");
+        /* Then clears the losing bets off the layout and pays the rest. */
+        useDealer.getState().enter("collecting");
         if (mode === "learn") {
           const base = loadRouletteLearning();
           const byType = { ...base.byType };
@@ -151,6 +158,7 @@ export function RouletteScreen() {
   function clearTable(keepBets: boolean) {
     setSettlements(null);
     setResult(null);
+    useDealer.getState().enter("idle");
     if (!keepBets) setBets([]);
     if (bankroll < MIN_BET) setStatus("summary");
   }
@@ -387,6 +395,11 @@ export function RouletteScreen() {
         </div>
 
         <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-12 sm:px-8">
+          {/* The croupier. They do less here than at a card table — the wheel
+              does the work — so they mostly stand, and sweep the layout when
+              the ball drops. */}
+          <Dealer className="-mb-2 w-[clamp(5rem,18vw,8rem)]" />
+
           <div className="flex w-full max-w-4xl flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-center lg:gap-10">
             <div className="flex shrink-0 flex-col items-center gap-3">
               <RouletteWheel

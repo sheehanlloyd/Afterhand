@@ -167,8 +167,18 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
     for (const step of steps) {
       counts = applyStep(counts, step);
       const snapshot = counts;
+      /* Which way the dealer's hand has to go to reach this card's seat, from
+         -1 at the far left of the felt to +1 at the far right. The dealer's own
+         box is straight ahead. */
+      const seat = step.kind === "dealer" ? -1 : game.hands.findIndex((hand) => hand.id === step.id);
+      const focus =
+        step.kind === "dealer" || game.hands.length < 2
+          ? 0
+          : (seat / (game.hands.length - 1)) * 1.4 - 0.7;
       schedule(() => {
         set({ visible: snapshot });
+        /* One flick per card, aimed at the seat it is going to. */
+        useDealer.getState().enter("dealing", { focus });
         playSound("deal");
         /* The card lands about four fifths of the way through its flight, and
            the felt should be heard at that moment rather than at the flick. */

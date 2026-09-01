@@ -39,6 +39,7 @@ import { moveChips } from "@/lib/motion/chip-bus";
 import { ChipFlightLayer } from "@/components/chips/ChipFlight";
 import { DiscardTray, Shoe as ShoeBlock } from "@/components/game/table/DealerStation";
 import { TableCamera } from "@/components/game/table/TableCamera";
+import { Dealer } from "@/components/game/table/Dealer";
 import { useDealer } from "@/lib/store/dealer";
 import { applyStep, revealSteps, type RevealCounts } from "@/lib/motion/deal-order";
 import { DURATION, RHYTHM } from "@/lib/motion/tokens";
@@ -425,6 +426,10 @@ function BaccaratTable() {
 
         <TableCamera focus={revealing ? "dealer" : settled ? "result" : "wide"}>
         <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-8 overflow-y-auto px-4 py-12 sm:px-9">
+          {/* Baccarat is dealt from the shoe rather than the hand, so the
+              dealer's part is smaller here: they draw, turn and call it. */}
+          <Dealer className="-mb-4 w-[clamp(5.5rem,20vw,8.5rem)]" />
+
           <div className="grid w-full max-w-2xl grid-cols-2 gap-6 sm:gap-12">
             {(["player", "banker"] as const).map((side) => {
               const cards = round

@@ -8,11 +8,17 @@ import type { PokerReveal } from "@/lib/store/poker-session";
 import { CardRow } from "@/components/game/blackjack/HandDisplay";
 import { CardBackTile, PlayingCard } from "@/components/cards/PlayingCard";
 import { evaluateHand } from "@/lib/games/poker/evaluator";
+import { buildPots } from "@/lib/games/poker/engine";
+import { ChipFace, chipBreakdown } from "@/components/chips/Chip";
+import { POKER_CHIPS } from "@/lib/store/poker-session";
 import { formatMoney } from "@/lib/utils/format";
 import { Counter } from "@/components/ui/Counter";
 import { DealerActivity, DiscardTray, Shoe } from "@/components/game/table/DealerStation";
+import { Dealer } from "@/components/game/table/Dealer";
 import { TableCamera, type CameraFocus } from "@/components/game/table/TableCamera";
 import { WinBurst } from "@/components/game/table/WinBurst";
+import { PlayerAvatar } from "@/components/game/table/PlayerAvatar";
+import { TurnRing } from "@/components/game/table/TurnRing";
 import { useTableAnchor } from "@/lib/motion/table-space";
 import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
@@ -59,6 +65,7 @@ function Seat({
   reveal,
   winners,
   handName,
+  thinking,
 }: {
   player: PokerPlayer;
   state: PokerState;
@@ -67,6 +74,8 @@ function Seat({
   reveal: PokerReveal;
   winners: Set<string>;
   handName?: string;
+  /** Set only while this seat is actually deciding, and only for opponents. */
+  thinking?: { startedAt: number; endsAt: number };
 }) {
   const action = lastActionFor(state, player.id);
   const anchor = useTableAnchor(`seat:${player.id}`);
@@ -115,6 +124,34 @@ function Seat({
         ) : null}
       </AnimatePresence>
 
+      {/* The person in the seat. They breathe, they glance up, and when they
+          fold they sit back — and that is the whole of it, because an avatar
+          that moves as much as the dealer does competes with the cards. */}
+      <div className="relative w-[clamp(2.5rem,7vw,3.4rem)]">
+        <PlayerAvatar
+          seed={player.id}
+          mood={
+            player.folded
+              ? "folded"
+              : winners.has(player.id)
+                ? "won"
+                : isTurn
+                  ? "thinking"
+                  : "idle"
+          }
+        />
+        {/* The clock, drawn only where there is a real one: these opponents
+            take a genuine amount of time to decide, and this is it. */}
+        {thinking ? (
+          <TurnRing
+            key={thinking.endsAt}
+            startedAt={thinking.startedAt}
+            endsAt={thinking.endsAt}
+            className="scale-[1.5]"
+          />
+        ) : null}
+      </div>
+
       <div className="flex items-center gap-2">
         <span className="truncate font-mono text-[10px] tracking-[0.14em] text-[rgba(236,229,216,0.8)] uppercase">
           {player.name}
@@ -134,7 +171,16 @@ function Seat({
         {shown ? (
           <CardRow cards={player.hole} origin={`seat:${player.id}`} short square />
         ) : player.folded ? (
-          <div className="h-[calc(clamp(1.7rem,4.6vw,2.4rem)*1.4)]" />
+          /* Folding is a push, not a deletion: the cards go towards the muck
+             and the seat is left empty behind them. */
+          <motion.div
+            className="h-[calc(clamp(1.7rem,4.6vw,2.4rem)*1.4)]"
+            initial={{ opacity: 0.7, y: 0 }}
+            animate={{ opacity: 0, y: -14 }}
+            transition={{ duration: DURATION.deal, ease: EASE.leave }}
+          >
+            <CardRow cards={player.hole} faceDownFrom={0} square />
+          </motion.div>
         ) : dealt > 0 ? (
           <CardRow
             cards={player.hole}
@@ -197,6 +243,115 @@ function Seat({
 }
 
 /**
+ * The pot, as clay.
+ *
+ * A number in the middle of the felt tells you the size of the pot. A pile of
+ * chips tells you there is a pot, which is the thing you register without
+ * reading. And when someone is all in for less than a full bet the engine
+ * splits the money into a main pot and side pots — so the pile splits too,
+ * because "you can only win part of that" is a fact about the table that ought
+ * to be visible on the table.
+ */
+function PotStack({ state, shown }: { state: PokerState; shown: number }) {
+  const pots = buildPots(state.players);
+  /* `shown` lags the engine while the chips are still crossing the felt, so the
+     pile is scaled to what has actually landed rather than to what is owed. */
+  const engineTotal = pots.reduce((sum, pot) => sum + pot.amount, 0);
+  const ratio = engineTotal > 0 ? Math.min(1, shown / engineTotal) : 0;
+
+  /**
+   * The engine splits the pot at every level anyone has invested to, which
+   * happens on the blinds alone. That is the right way to *settle* a pot and
+   * the wrong way to *show* one: to a player there is only a side pot when
+   * somebody is all in for less than the bet, and nobody wants to see the small
+   * blind called a main pot. So the piles are only separated once a short all
+   * in has actually made one of them unwinnable by someone.
+   */
+  const shortAllIn = state.players.some(
+    (player) =>
+      player.allIn &&
+      !player.folded &&
+      state.players.some((other) => !other.folded && other.invested > player.invested),
+  );
+
+  const amounts = shortAllIn
+    ? pots.map((pot) => pot.amount)
+    : [pots.reduce((sum, pot) => sum + pot.amount, 0)];
+  const visible = amounts
+    .map((amount) => Math.round(amount * ratio))
+    .filter((amount) => amount > 0);
+
+  if (visible.length === 0) return <div className="h-6" />;
+
+  return (
+    <div className="flex min-h-[2.9rem] items-end justify-center gap-4 [--chip-w:1.55rem]">
+      {visible.map((amount, index) => (
+        <div key={index} className="flex flex-col items-center gap-1.5">
+          <Pile amount={amount} />
+          {visible.length > 1 ? (
+            <span className="font-mono text-[7.5px] tracking-[0.14em] text-[rgba(236,229,216,0.38)] uppercase">
+              {index === 0 ? "Main" : `Side ${index}`}
+            </span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Chips of a value stack up; past five they start a new stack beside it. */
+const STACK_HEIGHT = 5;
+
+function Pile({ amount }: { amount: number }) {
+  const chips = chipBreakdown(amount, POKER_CHIPS);
+  const stacks: number[][] = [];
+  for (const value of chips) {
+    const last = stacks[stacks.length - 1];
+    /* Chips of one value go on one another; a different value starts its own
+       stack, which is how a real pot sorts itself as it is pushed together. */
+    if (last && last[0] === value && last.length < STACK_HEIGHT) last.push(value);
+    else stacks.push([value]);
+  }
+
+  return (
+    <div className="flex items-end gap-[3px]">
+      {stacks.map((stack, column) => (
+        <span
+          key={column}
+          className="relative block"
+          style={{
+            width: "var(--chip-w)",
+            height: `calc(var(--chip-w) + ${(stack.length - 1) * 3.5}px)`,
+          }}
+        >
+          {stack.map((value, row) => (
+            <motion.span
+              /* Keyed by what the chip is rather than where it sits, so a pot
+                 that grows keeps the clay already in it and only drops the new
+                 chips in. When the composition genuinely changes — four
+                 hundreds becoming a thousand — the pile re-forms, which is what
+                 a dealer sizing up a pot actually does. */
+              key={`${value}:${row}`}
+              className="absolute left-0"
+              initial={{ opacity: 0, y: -6, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{
+                duration: 0.16,
+                ease: EASE.arriveShort,
+                delay: Math.min(0.16, (column * STACK_HEIGHT + row) * 0.016),
+              }}
+              style={{ bottom: row * 3.5 }}
+            >
+              <ChipFace value={value} />
+            </motion.span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
  * The burn.
  *
  * Before every street a card comes off the top of the deck and goes face down
@@ -246,11 +401,14 @@ export function PokerTable({
   state,
   reveal,
   potShown,
+  thinking,
 }: {
   state: PokerState;
   reveal: PokerReveal;
   /** The pot as the table shows it, which lags the chips crossing the felt. */
   potShown: number;
+  /** The opponent currently deciding, and how long they have. */
+  thinking?: { playerId: string; startedAt: number; endsAt: number } | null;
 }) {
   const human = state.players.find((player) => player.isHuman)!;
   const opponents = state.players.filter((player) => !player.isHuman);
@@ -273,6 +431,10 @@ export function PokerTable({
   );
 
   const deckSize = state.deck.length || 1;
+  /* A table nobody has dealt at yet has not had a hand end on it, so the fresh
+     table says nothing rather than announcing that the hand is over. */
+  const street =
+    state.handNumber === 0 && state.street === "complete" ? "" : STREET_LABEL[state.street];
 
   return (
     <div className="felt relative flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -324,23 +486,29 @@ export function PokerTable({
                   state.street !== "complete"
                 }
                 isButton={state.players[state.buttonIndex]?.id === player.id}
+                thinking={thinking?.playerId === player.id ? thinking : undefined}
               />
             ))}
           </div>
 
           <div className="flex shrink-0 flex-col items-center gap-4 py-2">
+            {/* The dealer stands at the top of the table with the board laid
+                out in front of them, which is both where a dealer is and the
+                thing that makes the burn and the flop read as one gesture. */}
+            <Dealer className="-mb-1 w-[clamp(5rem,17vw,7.5rem)]" />
+
             <div className="flex items-center gap-4">
               <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
               <AnimatePresence mode="wait">
                 <motion.span
-                  key={state.street}
+                  key={street}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: DURATION.turn, ease: EASE.arrive }}
                   className="font-mono text-[9px] tracking-[0.24em] text-[rgba(236,229,216,0.42)] uppercase"
                 >
-                  {STREET_LABEL[state.street]}
+                  {street}
                 </motion.span>
               </AnimatePresence>
               <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
@@ -373,7 +541,8 @@ export function PokerTable({
               )}
             </div>
 
-            <div ref={potAnchor} className="flex flex-col items-center gap-1 px-4 py-1">
+            <div ref={potAnchor} className="flex flex-col items-center gap-1.5 px-4 py-1">
+              <PotStack state={state} shown={potShown} />
               <span className="font-mono text-[9px] tracking-[0.22em] text-[rgba(236,229,216,0.42)] uppercase">
                 Pot
               </span>
