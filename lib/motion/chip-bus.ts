@@ -14,6 +14,12 @@
 export interface ChipMove {
   from: string;
   to: string;
+  /**
+   * An explicit destination rectangle, for targets there is no point naming.
+   * A roulette layout has a hundred and fifty places to put a chip, and
+   * registering an anchor for each of them would cost more than it is worth.
+   */
+  toRect?: DOMRect;
   amount: number;
   denominations: number[];
   onArrive?: () => void;

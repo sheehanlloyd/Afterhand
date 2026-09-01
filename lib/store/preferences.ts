@@ -9,6 +9,7 @@ import {
   savePreferences,
 } from "@/lib/storage/preferences";
 import { setSoundEnabled } from "@/lib/sound";
+import { setHapticsEnabled } from "@/lib/motion/haptics";
 
 interface PreferencesStore {
   preferences: Preferences;
@@ -25,17 +26,20 @@ export const usePreferencesStore = create<PreferencesStore>((set, get) => ({
     if (get().hydrated) return;
     const preferences = loadPreferences();
     setSoundEnabled(preferences.soundEnabled);
+    setHapticsEnabled(preferences.hapticsEnabled);
     set({ preferences, hydrated: true });
   },
   update: (patch) => {
     const next = { ...get().preferences, ...patch };
     savePreferences(next);
     if (patch.soundEnabled !== undefined) setSoundEnabled(patch.soundEnabled);
+    if (patch.hapticsEnabled !== undefined) setHapticsEnabled(patch.hapticsEnabled);
     set({ preferences: next });
   },
   reset: () => {
     savePreferences(DEFAULT_PREFERENCES);
     setSoundEnabled(DEFAULT_PREFERENCES.soundEnabled);
+    setHapticsEnabled(DEFAULT_PREFERENCES.hapticsEnabled);
     set({ preferences: DEFAULT_PREFERENCES });
   },
 }));

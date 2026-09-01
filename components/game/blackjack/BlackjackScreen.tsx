@@ -22,6 +22,7 @@ import { formatMoney } from "@/lib/utils/format";
 import { ChipDragProvider } from "@/components/chips/chip-drag";
 import { ChipFlightLayer, useChipFlight } from "@/components/chips/ChipFlight";
 import { TableSpaceProvider } from "@/lib/motion/table-space";
+import { moveChips } from "@/lib/motion/chip-bus";
 import { CHIP_DENOMINATIONS } from "./Rails";
 
 const ACTION_KEYS: Record<string, PlayerAction> = {
@@ -168,8 +169,26 @@ function PlayingRoom({
 
   const actions = useMemo(() => (game ? availableActions(game) : []), [game]);
 
+  /**
+   * Doubling and splitting put a second wager on the table.
+   *
+   * That is money leaving the player's bankroll, so it is shown leaving: the
+   * chips come off the figure in the header and land beside the hand before the
+   * dealer sends the next card.
+   */
   const handleAction = useCallback(
     (action: PlayerAction) => {
+      if (action === "double" || action === "split") {
+        const hand = store.game?.hands[store.game.activeHandIndex];
+        if (hand) {
+          moveChips({
+            from: "bankroll",
+            to: `bet:${hand.id}`,
+            amount: hand.bet,
+            denominations: CHIP_DENOMINATIONS,
+          });
+        }
+      }
       store.act(action);
     },
     [store],

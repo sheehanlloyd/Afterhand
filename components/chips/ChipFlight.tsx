@@ -37,6 +37,8 @@ interface FlightRequest {
   from: string;
   /** Anchor the chips arrive at. */
   to: string;
+  /** An explicit destination, for targets that are not worth naming. */
+  toRect?: DOMRect;
   /** Total value being moved. It is broken into chips for display. */
   amount: number;
   denominations: number[];
@@ -77,9 +79,9 @@ export function ChipFlightLayer({ children }: { children: ReactNode }) {
   const counter = useRef(0);
 
   const send = useCallback(
-    ({ from, to, amount, denominations, onArrive, max = 7 }: FlightRequest) => {
+    ({ from, to, toRect, amount, denominations, onArrive, max = 7 }: FlightRequest) => {
       const origin = rectOf(from);
-      const destination = rectOf(to);
+      const destination = toRect ?? rectOf(to);
       const stack = chipBreakdown(amount, denominations).slice(0, max);
 
       /* Nothing to fly from or to, or motion is turned down: the caller still

@@ -25,6 +25,8 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { Placard, SimpleSetup } from "@/components/game/SimpleSetup";
 import { BetRailLayout, RailFrame, CHIP_DENOMINATIONS } from "@/components/game/blackjack/Rails";
 import { Chip } from "@/components/chips/Chip";
+import { TableSpaceProvider, useTableAnchor } from "@/lib/motion/table-space";
+import { ChipFlightLayer } from "@/components/chips/ChipFlight";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Stat } from "@/components/ui/Stat";
@@ -48,6 +50,8 @@ export function RouletteScreen() {
   const [bankroll, setBankroll] = useState(0);
   const [starting, setStarting] = useState(0);
   const [chip, setChip] = useState(5);
+  /* The tray. Every chip that reaches the layout leaves from here. */
+  const railAnchor = useTableAnchor("rail");
   const [bets, setBets] = useState<RouletteBet[]>([]);
   const [result, setResult] = useState<Pocket | null>(null);
   const [spinning, setSpinning] = useState(false);
@@ -251,8 +255,12 @@ export function RouletteScreen() {
   const net = settlements ? settlements.reduce((sum, entry) => sum + entry.net, 0) : 0;
 
   return (
-    <GameFrame
-      header={
+    <TableSpaceProvider>
+      <ChipFlightLayer>
+        <GameFrame
+          railKey={spinning ? "spinning" : settlements ? "settled" : "betting"}
+          railActive={!spinning && settlements === null}
+          header={
         <GameHeader
           game="Roulette"
           mode={mode === "learn" ? "Learn" : "Play"}
@@ -323,7 +331,10 @@ export function RouletteScreen() {
               </>
             }
             chips={
-              <div className="flex flex-wrap justify-center gap-2 [--chip-w:2.3rem] sm:gap-2.5 sm:[--chip-w:2.8rem]">
+              <div
+                ref={railAnchor}
+                className="flex flex-wrap justify-center gap-2 [--chip-w:2.3rem] sm:gap-2.5 sm:[--chip-w:2.8rem]"
+              >
                 {CHIP_DENOMINATIONS.map((value) => (
                   <Chip
                     key={value}
@@ -555,6 +566,8 @@ export function RouletteScreen() {
           </>
         }
       />
-    </GameFrame>
+        </GameFrame>
+      </ChipFlightLayer>
+    </TableSpaceProvider>
   );
 }

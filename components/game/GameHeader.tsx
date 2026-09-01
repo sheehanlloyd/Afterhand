@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Logo } from "@/components/layout/Logo";
 import { formatMoney } from "@/lib/utils/format";
 import { Counter } from "@/components/ui/Counter";
+import { useTableAnchor } from "@/lib/motion/table-space";
 import { DURATION } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
@@ -35,6 +36,9 @@ export function GameHeader({
 }) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
+  /* Where the player's money is on this screen. A wager put up mid hand, like
+     a double or a split, physically comes from here. */
+  const bankrollAnchor = useTableAnchor("bankroll");
 
   useEffect(() => {
     if (!open) return;
@@ -74,7 +78,7 @@ export function GameHeader({
           {detail ? <div className="hidden lg:block">{detail}</div> : null}
 
           {bankroll !== undefined ? (
-            <div className="text-right">
+            <div ref={bankrollAnchor} className="text-right">
               <div className="label hidden leading-none sm:block">Bankroll</div>
               {/* The bankroll counts to its new figure rather than replacing
                   itself, and it starts a beat late so the chips that caused the

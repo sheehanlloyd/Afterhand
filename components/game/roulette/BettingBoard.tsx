@@ -12,6 +12,10 @@ import {
 } from "@/lib/games/roulette/engine";
 import { formatMoney } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
+import { motion } from "framer-motion";
+import { moveChips } from "@/lib/motion/chip-bus";
+import { CHIP_DENOMINATIONS } from "@/components/game/blackjack/Rails";
+import { DURATION, SPRING } from "@/lib/motion/tokens";
 
 /**
  * A real betting layout: numbers sit in three rows of twelve, and the small
@@ -56,9 +60,27 @@ export function BettingBoard({
 }) {
   const totalOn = (id: string) => bets.find((bet) => bet.id === id)?.amount ?? 0;
 
-  function place(type: RouletteBetType, numbers: Pocket[]) {
+  /**
+   * Placing a chip.
+   *
+   * The stake registers straight away, because the layout is bet on quickly and
+   * a spot that does not respond to a click reads as a dropped click. What
+   * travels is the chip itself: it leaves the tray and lands on the spot that
+   * was pressed, and the mark on that spot waits for it to arrive.
+   */
+  function place(type: RouletteBetType, numbers: Pocket[], target?: HTMLElement | null) {
     if (disabled) return;
     const id = makeId(type, numbers);
+    if (target) {
+      moveChips({
+        from: "rail",
+        to: "",
+        toRect: target.getBoundingClientRect(),
+        amount: chip,
+        denominations: CHIP_DENOMINATIONS,
+        max: 1,
+      });
+    }
     onPlace({ id, type, numbers, amount: chip, label: labelFor(type, numbers) });
   }
 
@@ -66,17 +88,22 @@ export function BettingBoard({
     const amount = totalOn(id);
     if (amount === 0) return null;
     return (
-      <span
+      <motion.span
         onClick={(event) => {
           event.stopPropagation();
           if (!disabled) onRemove(id);
         }}
         role="presentation"
+        /* The mark waits for the clay. The chip is thrown the moment the spot
+           is pressed, and this is what it turns into when it gets there. */
+        initial={{ scale: 0.4, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ ...SPRING.wobble, delay: DURATION.chip * 0.82 }}
         className="tabular pointer-events-auto absolute -top-1 -right-1 z-20 grid h-5 min-w-5 cursor-pointer place-items-center rounded-full border border-[rgba(201,167,94,0.85)] bg-[#1a1512] px-1 text-[9px] text-[#e8dcbf]"
         title={`${formatMoney(amount)}. Click to remove.`}
       >
         {amount}
-      </span>
+      </motion.span>
     );
   }
 
@@ -105,7 +132,7 @@ export function BettingBoard({
                   key={String(pocket)}
                   type="button"
                   disabled={disabled}
-                  onClick={() => place("straight", [pocket])}
+                  onClick={(event) => place("straight", [pocket], event.currentTarget)}
                   aria-label={`Straight up on ${pocket}`}
                   className={cn(
                     "relative flex flex-1 items-center justify-center border font-mono text-[12px] transition-colors",
@@ -134,7 +161,7 @@ export function BettingBoard({
                       key={value}
                       type="button"
                       disabled={disabled}
-                      onClick={() => place("straight", [value])}
+                      onClick={(event) => place("straight", [value], event.currentTarget)}
                       aria-label={`Straight up on ${value}`}
                       className={cn(
                         "relative flex h-9 items-center justify-center border font-mono text-[12px] transition-colors",
@@ -164,8 +191,8 @@ export function BettingBoard({
                         left={((column + 1) / 12) * 100}
                         top={((row + 0.5) / 3) * 100}
                         label={`Split ${numberAt(column, row)} and ${numberAt(column + 1, row)}`}
-                        onClick={() =>
-                          place("split", [numberAt(column, row), numberAt(column + 1, row)])
+                        onClick={(event) =>
+                          place("split", [numberAt(column, row), numberAt(column + 1, row)], event.currentTarget)
                         }
                         chip={<ChipMark id={makeId("split", [numberAt(column, row), numberAt(column + 1, row)])} />}
                         disabled={disabled}
@@ -176,8 +203,8 @@ export function BettingBoard({
                         left={((column + 0.5) / 12) * 100}
                         top={((row + 1) / 3) * 100}
                         label={`Split ${numberAt(column, row)} and ${numberAt(column, row + 1)}`}
-                        onClick={() =>
-                          place("split", [numberAt(column, row), numberAt(column, row + 1)])
+                        onClick={(event) =>
+                          place("split", [numberAt(column, row), numberAt(column, row + 1)], event.currentTarget)
                         }
                         chip={<ChipMark id={makeId("split", [numberAt(column, row), numberAt(column, row + 1)])} />}
                         disabled={disabled}
@@ -189,13 +216,13 @@ export function BettingBoard({
                         top={((row + 1) / 3) * 100}
                         corner
                         label={`Corner on ${numberAt(column, row)}, ${numberAt(column + 1, row)}, ${numberAt(column, row + 1)}, ${numberAt(column + 1, row + 1)}`}
-                        onClick={() =>
+                        onClick={(event) =>
                           place("corner", [
                             numberAt(column, row + 1),
                             numberAt(column, row),
                             numberAt(column + 1, row + 1),
                             numberAt(column + 1, row),
-                          ])
+                          ], event.currentTarget)
                         }
                         chip={
                           <ChipMark
@@ -220,8 +247,8 @@ export function BettingBoard({
                   left={((column + 0.5) / 12) * 100}
                   top={0}
                   label={`Street on ${numberAt(column, 2)}, ${numberAt(column, 1)}, ${numberAt(column, 0)}`}
-                  onClick={() =>
-                    place("street", [numberAt(column, 2), numberAt(column, 1), numberAt(column, 0)])
+                  onClick={(event) =>
+                    place("street", [numberAt(column, 2), numberAt(column, 1), numberAt(column, 0)], event.currentTarget)
                   }
                   chip={
                     <ChipMark
@@ -252,7 +279,7 @@ export function BettingBoard({
                     top={0}
                     corner
                     label={`Six line on ${numbers.join(", ")}`}
-                    onClick={() => place("six-line", numbers)}
+                    onClick={(event) => place("six-line", numbers, event.currentTarget)}
                     chip={<ChipMark id={makeId("six-line", numbers)} />}
                     disabled={disabled}
                   />
@@ -271,7 +298,7 @@ export function BettingBoard({
                   key={index}
                   type="button"
                   disabled={disabled}
-                  onClick={() => place("column", numbers)}
+                  onClick={(event) => place("column", numbers, event.currentTarget)}
                   aria-label={`Column ${index + 1}, pays 2 to 1`}
                   className={cn(
                     "relative flex h-9 items-center justify-center border border-[rgba(236,229,216,0.18)] bg-[rgba(20,72,58,0.5)] font-mono text-[9px] tracking-[0.1em] text-[rgba(236,229,216,0.8)] uppercase transition-colors",
@@ -298,7 +325,7 @@ export function BettingBoard({
                   key={label}
                   type="button"
                   disabled={disabled}
-                  onClick={() => place("dozen", numbers)}
+                  onClick={(event) => place("dozen", numbers, event.currentTarget)}
                   className={cn(
                     "relative flex h-8 items-center justify-center border border-[rgba(236,229,216,0.18)] bg-[rgba(20,72,58,0.5)] font-mono text-[9.5px] tracking-[0.12em] text-[rgba(236,229,216,0.82)] uppercase transition-colors",
                     !disabled && "hover:border-[rgba(201,167,94,0.8)]",
@@ -334,7 +361,7 @@ export function BettingBoard({
                   key={type}
                   type="button"
                   disabled={disabled}
-                  onClick={() => place(type, numbers)}
+                  onClick={(event) => place(type, numbers, event.currentTarget)}
                   className={cn(
                     "relative flex h-8 items-center justify-center border border-[rgba(236,229,216,0.18)] font-mono text-[9.5px] tracking-[0.1em] uppercase transition-colors",
                     type === "red"
@@ -374,7 +401,7 @@ function Marker({
   left: number;
   top: number;
   label: string;
-  onClick: () => void;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   chip: React.ReactNode;
   corner?: boolean;
   disabled: boolean;

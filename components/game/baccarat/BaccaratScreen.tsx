@@ -34,7 +34,8 @@ import { Stat } from "@/components/ui/Stat";
 import { Modal } from "@/components/ui/Modal";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { playSound, playSoundIn } from "@/lib/sound";
-import { TableSpaceProvider } from "@/lib/motion/table-space";
+import { TableSpaceProvider, useTableAnchor, useTableSpace } from "@/lib/motion/table-space";
+import { moveChips } from "@/lib/motion/chip-bus";
 import { ChipFlightLayer } from "@/components/chips/ChipFlight";
 import { DiscardTray, Shoe as ShoeBlock } from "@/components/game/table/DealerStation";
 import { TableCamera } from "@/components/game/table/TableCamera";
@@ -84,6 +85,8 @@ function BaccaratTable() {
   const [net, setNet] = useState(0);
   const [log, setLog] = useState<RoundLog[]>([]);
   const [revealing, setRevealing] = useState(false);
+  const railAnchor = useTableAnchor("rail");
+  const { register } = useTableSpace();
   /**
    * Cards physically on the felt, per side.
    *
@@ -177,6 +180,25 @@ function BaccaratTable() {
         }
       }, landed + 320),
     );
+  }
+
+  /**
+   * Putting a chip on a zone.
+   *
+   * The clay leaves the tray, crosses the felt and lands on the zone, and only
+   * then does the staked figure change. Tapping and dragging end in the same
+   * place, which is the point: the drag is how you do it at a table and the tap
+   * is how you do it quickly.
+   */
+  function placeChip(value: number, target: BaccaratBet) {
+    moveChips({
+      from: "rail",
+      to: `bet:${target}`,
+      amount: value,
+      denominations: CHIP_DENOMINATIONS,
+      onArrive: () =>
+        setAmount((current) => Math.min(current + value, Math.min(RULES.maxBet, bankroll))),
+    });
   }
 
   function nextHand() {
@@ -308,28 +330,25 @@ function BaccaratTable() {
               </>
             }
             chips={
-              <div className="flex flex-wrap justify-center gap-2.5 [--chip-w:2.9rem] sm:gap-2.5 sm:[--chip-w:3rem]">
+              <div
+                ref={railAnchor}
+                className="flex flex-wrap justify-center gap-2.5 [--chip-w:2.9rem] sm:gap-2.5 sm:[--chip-w:3rem]"
+              >
                 {CHIP_DENOMINATIONS.filter((value) => value <= RULES.maxBet).map((value) => (
                   <Chip
                     key={value}
                     value={value}
                     draggable={round === null}
-                    onClick={() => {
-                      playSound("chip");
-                      setAmount((current) =>
-                        Math.min(current + value, Math.min(RULES.maxBet, bankroll)),
-                      );
-                    }}
+                    onClick={() => placeChip(value, bet)}
                     /* Dropping a chip on a zone picks that side and stakes it,
                        which is the one gesture rather than the usual two. */
                     onDrop={(target) => {
-                      playSound("chip");
-                      if (target === "player" || target === "banker" || target === "tie") {
-                        setBet(target);
-                      }
-                      setAmount((current) =>
-                        Math.min(current + value, Math.min(RULES.maxBet, bankroll)),
-                      );
+                      const zone =
+                        target === "player" || target === "banker" || target === "tie"
+                          ? target
+                          : bet;
+                      if (zone !== bet) setBet(zone);
+                      placeChip(value, zone);
                     }}
                     disabled={amount + value > Math.min(RULES.maxBet, bankroll)}
                   />
@@ -464,6 +483,7 @@ function BaccaratTable() {
                 <button
                   key={option.id}
                   type="button"
+                  ref={(element) => register(`bet:${option.id}`, element)}
                   disabled={disabled}
                   {...(disabled ? {} : { [CHIP_DROP_ATTRIBUTE]: option.id })}
                   onClick={() => {

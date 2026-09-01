@@ -99,6 +99,12 @@ export function SettingsScreen() {
             onChange={(value) => update({ soundEnabled: value })}
           />
           <Toggle
+            label="Haptics"
+            description="A short vibration when a card lands or a chip is placed. Phones and tablets only, and off automatically if you have asked for reduced motion."
+            checked={preferences.hapticsEnabled}
+            onChange={(value) => update({ hapticsEnabled: value })}
+          />
+          <Toggle
             label="Keyboard hints"
             description="Show the shortcut letters on table controls."
             checked={preferences.showKeyboardHints}

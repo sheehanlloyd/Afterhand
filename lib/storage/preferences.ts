@@ -4,6 +4,8 @@ import { STORAGE_KEYS, Versioned, readStore, writeStore } from "./storage";
 
 export interface Preferences extends Versioned {
   soundEnabled: boolean;
+  /** Short vibrations on a phone when a card lands or a chip is placed. */
+  hapticsEnabled: boolean;
   preferredGame: GameId;
   preferredBankroll: number;
   preferredMode: GameMode;
@@ -15,6 +17,7 @@ export interface Preferences extends Versioned {
 export const DEFAULT_PREFERENCES: Preferences = {
   version: 1,
   soundEnabled: false,
+  hapticsEnabled: true,
   preferredGame: "blackjack",
   preferredBankroll: 1000,
   preferredMode: "learn",
