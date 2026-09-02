@@ -110,9 +110,11 @@ export function BettingBoard({
   const zeroPockets: Pocket[] = variant === "american" ? [0, "00"] : [0];
 
   return (
-    /* The layout is wider than a phone. It scrolls, and the mask on the trailing
-       edge is what tells you so, since there is no scrollbar on touch. */
-    <div
+    <div className="w-full">
+      {/* The layout is wider than a phone. It scrolls, and the mask on the
+          trailing edge is what tells you so, since there is no scrollbar on
+          touch. */}
+      <div
       className="w-full overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1"
       style={{
         WebkitMaskImage:
@@ -380,11 +382,16 @@ export function BettingBoard({
           </div>
           <div className="w-16" />
         </div>
-
-        <p className="mt-3 text-center font-mono text-[8.5px] tracking-[0.14em] text-[rgba(236,229,216,0.3)] uppercase">
-          Click a line marker for splits, streets, corners, and six lines. Click a chip to remove it.
-        </p>
       </div>
+      </div>
+
+      {/* Outside the scroller. Inside it the line inherited the layout's 32rem
+          minimum, so on a phone the middle of the sentence sat off the right
+          edge and the instruction only read correctly if you scrolled the board
+          sideways to find it. */}
+      <p className="mt-3 text-center font-mono text-[8.5px] tracking-[0.14em] text-[rgba(236,229,216,0.3)] uppercase">
+        Click a line marker for splits, streets, corners, and six lines. Click a chip to remove it.
+      </p>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useId } from "react";
+import { ReactNode, useId, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 export function Field({
@@ -28,6 +28,23 @@ export function Field({
   );
 }
 
+/**
+ * A number input you can actually edit.
+ *
+ * The obvious implementation sends `Number(event.target.value)` straight to the
+ * parent on every keystroke, and it makes the field almost unusable: clearing it
+ * reads as `Number("") === 0`, the parent clamps that to its own minimum, and
+ * the field repaints with that minimum before the next character arrives. A
+ * reader selecting the table minimum and retyping it as 25 got 125, because the
+ * clamped 1 was still sitting in the box in front of what they typed.
+ *
+ * So the box keeps the text the reader is actually typing, and the parent is
+ * only told about values that are complete numbers. An empty box, a lone minus
+ * sign and a trailing decimal point are all legitimate things to be holding
+ * halfway through typing a number, and none of them are worth a repaint. On
+ * blur the box resyncs to whatever the parent settled on, so an edit abandoned
+ * midway shows the committed value rather than the fragment.
+ */
 export function NumberField({
   value,
   onChange,
@@ -51,6 +68,10 @@ export function NumberField({
 }) {
   const generated = useId();
   const inputId = id ?? generated;
+
+  const committed = Number.isFinite(value) ? String(value) : "";
+  const [draft, setDraft] = useState<string | null>(null);
+
   return (
     <div
       className={cn(
@@ -64,14 +85,18 @@ export function NumberField({
         aria-label={ariaLabel}
         type="number"
         inputMode="numeric"
-        value={Number.isFinite(value) ? value : ""}
+        value={draft ?? committed}
         min={min}
         max={max}
         step={step}
         onChange={(event) => {
-          const next = Number(event.target.value);
-          onChange(Number.isFinite(next) ? next : 0);
+          const text = event.target.value;
+          setDraft(text);
+          if (text.trim() === "") return;
+          const next = Number(text);
+          if (Number.isFinite(next)) onChange(next);
         }}
+        onBlur={() => setDraft(null)}
         className="tabular w-full bg-transparent text-[14px] text-fg outline-none"
       />
     </div>

@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { GameMode } from "@/types";
 import { usePokerSession } from "@/lib/store/poker-session";
-import { usePreferences } from "@/lib/store/preferences";
+import { usePreferences, usePreferenceState } from "@/lib/store/preferences";
 import { currentPlayer, humanPlayer } from "@/lib/games/poker/engine";
 import { PokerAssessmentKey } from "@/lib/storage/learning-games";
 import { GameFrame } from "@/components/game/GameFrame";
@@ -33,7 +32,7 @@ export function PokerScreen() {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
   const [stack, setStack] = useState(1000);
-  const [mode, setMode] = useState<GameMode>(preferences.preferredMode);
+  const [mode, setMode] = usePreferenceState((saved) => saved.preferredMode);
 
   const { status, table } = store;
 

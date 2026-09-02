@@ -35,7 +35,7 @@ const ACTION_KEYS: Record<string, PlayerAction> = {
 
 export function BlackjackScreen() {
   const store = useBlackjackSession();
-  const { preferences, update } = usePreferences();
+  const { preferences, hydrated, update } = usePreferences();
   const [rulesOpen, setRulesOpen] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
   const [confirmRestart, setConfirmRestart] = useState(false);
@@ -84,6 +84,12 @@ export function BlackjackScreen() {
     return (
       <SiteShell>
         <SessionSetup
+          /* The setup seeds its fields from these props once, on mount. The
+             stored preferences only arrive after that first render, so the form
+             is rebuilt the moment they land and picks them up as its starting
+             values. Before then it is showing the same defaults the server
+             rendered, so nothing the reader has touched is thrown away. */
+          key={hydrated ? "saved" : "defaults"}
           initialBankroll={preferences.preferredBankroll}
           initialMode={preferences.preferredMode}
           initialRules={preferences.blackjackRules}

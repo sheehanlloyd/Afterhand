@@ -36,6 +36,55 @@ export const DEFAULT_RULES: BlackjackRules = {
   penetration: 0.75,
 };
 
+/**
+ * Rebuilds a rule set out of untrusted input.
+ *
+ * Rules reach the engine from localStorage and from the session recovery
+ * payload, both of which are text a reader can edit and neither of which is
+ * guaranteed to still hold what this version wrote. Only values that are the
+ * type and range they claim to be are adopted; anything else falls back to the
+ * house rule. `decks` matters most: `createShoe` builds its cards with
+ * `i < count`, so a shoe of "x" decks is a shoe of no cards, and a table that
+ * takes a bet and then deals nothing is worse than one that quietly resets to
+ * six decks.
+ */
+export function sanitiseRules(input: unknown): BlackjackRules {
+  const rules = { ...DEFAULT_RULES };
+  if (typeof input !== "object" || input === null || Array.isArray(input)) return rules;
+  const raw = input as Record<string, unknown>;
+
+  const positive = (value: unknown): value is number =>
+    typeof value === "number" && Number.isFinite(value) && value > 0;
+  const whole = (value: unknown, min: number, max: number): value is number =>
+    typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
+
+  if (whole(raw.decks, 1, 8)) rules.decks = raw.decks;
+  if (whole(raw.maxSplitHands, 1, 8)) rules.maxSplitHands = raw.maxSplitHands;
+  if (positive(raw.blackjackPayout)) rules.blackjackPayout = raw.blackjackPayout;
+  if (positive(raw.minBet)) rules.minBet = Math.round(raw.minBet);
+  if (positive(raw.maxBet)) rules.maxBet = Math.round(raw.maxBet);
+  if (typeof raw.penetration === "number" && raw.penetration > 0.1 && raw.penetration <= 0.95) {
+    rules.penetration = raw.penetration;
+  }
+  for (const flag of [
+    "dealerHitsSoft17",
+    "doubleAfterSplit",
+    "insurance",
+    "resplitAces",
+    "hitSplitAces",
+  ] as const) {
+    if (typeof raw[flag] === "boolean") rules[flag] = raw[flag];
+  }
+  if (raw.surrender === "none" || raw.surrender === "late") rules.surrender = raw.surrender;
+
+  /* A table whose maximum sits under its minimum cannot take a bet at all. */
+  if (rules.maxBet < rules.minBet) {
+    rules.minBet = DEFAULT_RULES.minBet;
+    rules.maxBet = DEFAULT_RULES.maxBet;
+  }
+  return rules;
+}
+
 export type PlayerAction =
   | "hit"
   | "stand"

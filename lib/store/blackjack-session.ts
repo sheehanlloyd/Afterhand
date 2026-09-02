@@ -5,6 +5,7 @@ import { Card, GameMode } from "@/types";
 import {
   BlackjackRules,
   BlackjackState,
+  sanitiseRules,
   DecisionRecord,
   HandResult,
 } from "@/lib/games/blackjack/types";
@@ -50,6 +51,49 @@ interface RecoveryPayload {
   rules: BlackjackRules;
   startedAt: number;
   handNumber: number;
+}
+
+/**
+ * Reads back a session left behind by a refresh.
+ *
+ * sessionStorage is a text file the reader can edit, and the recovery payload is
+ * the only place a stored value is handed to the engine rather than merely
+ * displayed. An earlier version checked that the bankroll was a positive number
+ * and trusted the rest of the object, which was enough to put the string
+ * "seven" in the hand counter and a null starting bankroll behind the session
+ * total. A malformed `decks` was worse: `createShoe` builds its cards with
+ * `i < count`, so a shoe of "x" decks is a shoe of no cards, and the next deal
+ * draws from nothing.
+ *
+ * So the payload is rebuilt field by field and anything that is not the shape it
+ * claims to be drops the whole recovery, which is the same stance `readStore`
+ * takes on a version it does not recognise. Losing an interrupted hand is a far
+ * smaller cost than resuming into a table that cannot deal.
+ */
+function positive(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function whole(value: unknown, min: number, max: number): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
+}
+
+function readRecovery(): RecoveryPayload | null {
+  const raw = readSession<Record<string, unknown>>(RECOVERY_KEY);
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
+  if (!positive(raw.bankroll) || !positive(raw.startingBankroll)) return null;
+  if (raw.mode !== "play" && raw.mode !== "learn") return null;
+  if (!positive(raw.startedAt)) return null;
+  if (!whole(raw.handNumber, 0, Number.MAX_SAFE_INTEGER)) return null;
+
+  return {
+    bankroll: raw.bankroll,
+    startingBankroll: raw.startingBankroll,
+    mode: raw.mode,
+    rules: sanitiseRules(raw.rules),
+    startedAt: raw.startedAt,
+    handNumber: raw.handNumber,
+  };
 }
 
 type Status = "setup" | "playing" | "summary";
@@ -283,9 +327,13 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
 
     checkRecovery: () => {
       if (get().status !== "setup") return;
-      const payload = readSession<RecoveryPayload>(RECOVERY_KEY);
-      if (payload && typeof payload.bankroll === "number" && payload.bankroll > 0) {
+      const payload = readRecovery();
+      if (payload) {
         set({ recoveryAvailable: payload });
+      } else {
+        /* Nothing usable in there. Clearing it stops the same unreadable
+           payload being re-examined on every visit to the table. */
+        removeSession(RECOVERY_KEY);
       }
     },
 

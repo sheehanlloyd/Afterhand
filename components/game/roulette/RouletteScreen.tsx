@@ -9,14 +9,13 @@ import {
   PAYOUTS,
   Pocket,
   RouletteBet,
-  RouletteVariant,
   houseEdge,
   pocketColour,
   settleBets,
   spin,
   winProbability,
 } from "@/lib/games/roulette/engine";
-import { usePreferences } from "@/lib/store/preferences";
+import { usePreferences, usePreferenceState } from "@/lib/store/preferences";
 import { loadRouletteLearning, saveRouletteLearning } from "@/lib/storage/learning-games";
 import { GameFrame } from "@/components/game/GameFrame";
 import { GameHeader } from "@/components/game/GameHeader";
@@ -45,10 +44,10 @@ const MIN_BET = 5;
 const MAX_TOTAL = 5000;
 
 export function RouletteScreen() {
-  const { preferences, update } = usePreferences();
+  const { preferences, hydrated, update } = usePreferences();
   const [status, setStatus] = useState<"setup" | "playing" | "summary">("setup");
-  const [mode, setMode] = useState<GameMode>(preferences.preferredMode);
-  const [variant, setVariant] = useState<RouletteVariant>(preferences.rouletteVariant);
+  const [mode, setMode] = usePreferenceState((saved) => saved.preferredMode);
+  const [variant, setVariant] = usePreferenceState((saved) => saved.rouletteVariant);
   const [bankroll, setBankroll] = useState(0);
   const [starting, setStarting] = useState(0);
   const [chip, setChip] = useState(5);
@@ -66,6 +65,18 @@ export function RouletteScreen() {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  /**
+   * Whether a spin is already under way, as a ref rather than as state.
+   *
+   * `spinning` is what the table is drawn from, but a state update is not
+   * visible until the next render, so every click landing in the same tick read
+   * it as false and started its own spin. Eight quick taps on Spin took eight
+   * stakes out of the bankroll for one set of bets on the layout, put eight
+   * pockets in the history, and moved the counter on by eight. The latch is
+   * checked and set in the same statement the click runs in, so only the first
+   * of them gets through.
+   */
+  const spinning_ = useRef(false);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -88,14 +99,23 @@ export function RouletteScreen() {
         rouletteVariant: variant,
       });
     },
-    [update, variant],
+    [update, variant, setMode],
   );
 
   function place(bet: RouletteBet) {
-    if (spinning || settlements) return;
+    if (spinning_.current || spinning || settlements) return;
     if (staked + bet.amount > Math.min(bankroll, MAX_TOTAL)) return;
     playSound("chip");
     setBets((current) => {
+      /* Re-checked against the bets as they actually stand. The test above uses
+         `staked`, which is derived from the last render, so two chips dropped in
+         the same tick were both measured against the total before either of
+         them, and the pair could put more on the layout than the bankroll
+         covers. */
+      const ceiling = Math.min(bankroll, MAX_TOTAL);
+      const total = current.reduce((sum, entry) => sum + entry.amount, 0);
+      if (total + bet.amount > ceiling) return current;
+
       const existing = current.find((entry) => entry.id === bet.id);
       if (existing) {
         return current.map((entry) =>
@@ -107,13 +127,15 @@ export function RouletteScreen() {
   }
 
   function removeBet(id: string) {
-    if (spinning || settlements) return;
+    if (spinning_.current || spinning || settlements) return;
     playSound("click");
     setBets((current) => current.filter((entry) => entry.id !== id));
   }
 
   function doSpin() {
+    if (spinning_.current) return;
     if (bets.length === 0 || spinning || staked > bankroll) return;
+    spinning_.current = true;
     playSound("deal");
     /* The croupier sets the wheel going and then waits on it, the same as
        everyone else at the table. */
@@ -131,6 +153,7 @@ export function RouletteScreen() {
         setBankroll((current) => current + returned);
         setSettlements(outcome);
         setSpinning(false);
+        spinning_.current = false;
         setSpins((current) => current + 1);
         setHistory((current) => [pocket, ...current].slice(0, 24));
         const net = outcome.reduce((sum, entry) => sum + entry.net, 0);
@@ -156,6 +179,7 @@ export function RouletteScreen() {
   }
 
   function clearTable(keepBets: boolean) {
+    spinning_.current = false;
     setSettlements(null);
     setResult(null);
     useDealer.getState().enter("idle");
@@ -167,6 +191,12 @@ export function RouletteScreen() {
     return (
       <SiteShell>
         <SimpleSetup
+          /* The setup seeds its fields from these props once, on mount. The
+             stored preferences only arrive after that first render, so the form
+             is rebuilt the moment they land and picks them up as its starting
+             values. Before then it is showing the same defaults the server
+             rendered, so nothing the reader has touched is thrown away. */
+          key={hydrated ? "saved" : "defaults"}
           eyebrow="Roulette"
           title="Start a session"
           intro="European by default. Every bet on the layout shows its true probability and the edge that comes with it."

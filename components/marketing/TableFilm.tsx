@@ -40,7 +40,7 @@ function Seat({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-2.5",
+        "flex flex-col items-center gap-1.5 sm:gap-2.5",
         align === "top" ? "flex-col" : "flex-col-reverse",
       )}
     >
@@ -48,7 +48,7 @@ function Seat({
         {seat.label}
       </span>
 
-      <div className="flex min-h-[var(--film-card-min)] items-center gap-1.5">
+      <div className="flex min-h-[calc(var(--card-w)*1.4)] items-center gap-1.5">
         {(seat.cards ?? []).map((entry, position) => (
           <PlayingCard
             // The key is the slot, not the card, so a card that stays on the
@@ -178,11 +178,10 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
     <figure className={cn("relative", className)}>
       <div
         aria-hidden="true"
-        className="felt relative aspect-[5/4] w-full overflow-hidden border border-[rgba(201,167,94,0.28)] shadow-[0_36px_70px_-46px_rgba(0,0,0,0.85)] sm:aspect-[16/12]"
-        style={{ ["--film-card-min" as string]: "4.4rem" }}
+        className="felt relative flex min-h-[21rem] w-full flex-col overflow-hidden border border-[rgba(201,167,94,0.28)] shadow-[0_36px_70px_-46px_rgba(0,0,0,0.85)] sm:min-h-[26rem]"
       >
         <TableSpaceProvider>
-        <div className="absolute inset-3 border border-[rgba(201,167,94,0.14)]" />
+        <div className="pointer-events-none absolute inset-3 z-0 border border-[rgba(201,167,94,0.14)]" />
 
         {/* The film's shoe. Small, unlabelled, and off to one side, but every
             card in the hand below comes out of it, which is the whole reason
@@ -209,23 +208,46 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
           ))}
         </div>
 
-        <div className="absolute inset-0 flex flex-col items-center justify-between px-6 pt-9 pb-12 [--card-w:2.9rem] sm:px-11 sm:pb-14 sm:[--card-w:3.6rem]">
-          <Seat seat={frame.top} seatKey={`${script.id}-top`} align="top" />
+        {/*
+          The table is laid out as rows in normal flow rather than as absolutely
+          positioned pieces over a shared box. An earlier version floated the
+          centre plate, the caption and the review over the felt at fixed
+          offsets, which held at one size and collided at every other: the plate
+          printed across the player's cards, the review sat on top of the caption
+          strip, and on a narrow screen the review's own text ran past the bottom
+          edge and was cut off. Rows cannot overlap each other, so the whole
+          class of collision is gone rather than tuned away.
 
-          <div className="pointer-events-none absolute inset-x-0 top-[50%] flex -translate-y-1/2 items-center gap-4 px-8">
+          The two seat bands share the slack (`flex-1`), so whatever height is
+          left after the fixed rows is split evenly and the seats stay centred in
+          it at any aspect.
+        */}
+        <div className="relative z-10 flex flex-1 flex-col px-4 pt-9 pb-2 [--card-w:2.6rem] sm:px-11 sm:[--card-w:3.6rem]">
+          <div className="flex flex-1 items-center justify-center">
+            <Seat seat={frame.top} seatKey={`${script.id}-top`} align="top" />
+          </div>
+
+          {/* Centre plate. In flow, so it divides the two seats instead of
+              being drawn across whichever one happens to reach the midline. */}
+          <div className="flex shrink-0 items-center gap-3 py-1 sm:gap-4">
             <span className="h-px flex-1 bg-[rgba(201,167,94,0.16)]" />
             {frame.pocket ? (
               <Pocket pocket={frame.pocket} />
             ) : (
-              <span className="font-mono text-[clamp(0.5rem,1.1vw,0.6rem)] tracking-[0.3em] whitespace-nowrap text-[rgba(201,167,94,0.4)] uppercase">
+              <span className="min-w-0 truncate font-mono text-[9px] tracking-[0.24em] text-[rgba(201,167,94,0.4)] uppercase sm:text-[10px] sm:tracking-[0.3em]">
                 {script.plate}
               </span>
             )}
             <span className="h-px flex-1 bg-[rgba(201,167,94,0.16)]" />
           </div>
 
-          <div className="flex w-full items-end justify-between gap-4">
-            <div className="flex min-h-[2.2rem] items-end [--chip-w:1.6rem] sm:[--chip-w:2rem]">
+          {/* The player's band. The chips are taken out of the flow so that the
+              seat is centred on the felt rather than on the space the chips
+              leave over; below `sm` there was no counterweight on the right and
+              the hand was pushed hard against the edge, where the last card was
+              clipped by the felt. */}
+          <div className="relative flex flex-1 items-center justify-center">
+            <div className="pointer-events-none absolute bottom-0 left-0 flex items-end [--chip-w:1.4rem] sm:[--chip-w:2rem]">
               <AnimatePresence>
                 {(frame.chips ?? []).map((value, position) => (
                   <motion.span
@@ -246,54 +268,56 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
             </div>
 
             <Seat seat={frame.bottom} seatKey={`${script.id}-bottom`} align="bottom" />
-
-            <div className="hidden w-[3.4rem] sm:block" />
           </div>
         </div>
 
-        {/* The review slides up over the felt, the way it does at the real table. */}
-        <AnimatePresence>
-          {frame.verdict ? (
-            <motion.div
-              key="verdict"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 30 }}
-              transition={{ duration: 0.42, ease: EASE }}
-              className="absolute right-3 bottom-3 left-3 z-10 border border-[rgba(201,167,94,0.3)] bg-[rgba(9,13,11,0.93)] p-4 backdrop-blur-sm sm:right-5 sm:bottom-5 sm:left-5 sm:p-5"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="inline-block h-[7px] w-[7px] rotate-45"
-                  style={{
-                    background:
-                      frame.verdict.mark === "optimal" ? "var(--positive)" : "var(--caution)",
-                  }}
-                />
-                <span className="font-mono text-[9px] tracking-[0.24em] text-[rgba(201,167,94,0.85)] uppercase">
-                  {frame.verdict.mark === "optimal" ? "Played well" : "Worth reviewing"}
-                </span>
-              </div>
-              <p className="mt-2.5 text-[13px] leading-relaxed text-[rgba(236,229,216,0.86)]">
-                {frame.verdict.text}
-              </p>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-
-        {/* Caption strip */}
-        <div className="absolute inset-x-0 bottom-0 z-0 px-6 pb-3 sm:px-11">
+        {/*
+          One band at the foot of the felt, carrying either the caption or the
+          review. They are alternatives rather than layers: the review used to
+          be painted over the caption at 93% opacity, so the caption showed
+          through its own replacement as a second line of ghosted text. Only one
+          is ever mounted now, and the band reserves the height of a two line
+          caption so the table above does not jump as the wording changes.
+        */}
+        <div className="relative z-10 flex min-h-[7.5rem] shrink-0 items-end px-3 pb-3 sm:min-h-[7rem] sm:px-5">
           <AnimatePresence mode="wait">
-            <motion.p
-              key={frame.caption}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.26, ease: EASE }}
-              className="text-center font-mono text-[10px] leading-relaxed tracking-[0.12em] text-[rgba(236,229,216,0.5)] uppercase"
-            >
-              {frame.caption}
-            </motion.p>
+            {frame.verdict ? (
+              <motion.div
+                key="verdict"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 14 }}
+                transition={{ duration: 0.42, ease: EASE }}
+                className="w-full border border-[rgba(201,167,94,0.3)] bg-[#0a0e0c] p-3 sm:p-4"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-block h-[7px] w-[7px] shrink-0 rotate-45"
+                    style={{
+                      background:
+                        frame.verdict.mark === "optimal" ? "var(--positive)" : "var(--caution)",
+                    }}
+                  />
+                  <span className="font-mono text-[9px] tracking-[0.24em] text-[rgba(201,167,94,0.85)] uppercase">
+                    {frame.verdict.mark === "optimal" ? "Played well" : "Worth reviewing"}
+                  </span>
+                </div>
+                <p className="mt-2 text-[12px] leading-snug text-[rgba(236,229,216,0.86)] sm:text-[13px] sm:leading-relaxed">
+                  {frame.verdict.text}
+                </p>
+              </motion.div>
+            ) : (
+              <motion.p
+                key={frame.caption}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.26, ease: EASE }}
+                className="w-full text-center font-mono text-[9px] leading-relaxed tracking-[0.12em] text-[rgba(236,229,216,0.5)] uppercase sm:text-[10px]"
+              >
+                {frame.caption}
+              </motion.p>
+            )}
           </AnimatePresence>
         </div>
         </TableSpaceProvider>

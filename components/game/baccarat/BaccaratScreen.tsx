@@ -13,7 +13,7 @@ import {
   settleBet,
 } from "@/lib/games/baccarat/engine";
 import { Shoe, cardsRemaining } from "@/lib/games/deck";
-import { usePreferences } from "@/lib/store/preferences";
+import { usePreferences, usePreferenceState } from "@/lib/store/preferences";
 import { loadBaccaratLearning, saveBaccaratLearning } from "@/lib/storage/learning-games";
 import { GameFrame } from "@/components/game/GameFrame";
 import { GameHeader } from "@/components/game/GameHeader";
@@ -74,9 +74,9 @@ export function BaccaratScreen() {
 
 function BaccaratTable() {
   const { dragging, over } = useChipDrag();
-  const { preferences, update } = usePreferences();
+  const { preferences, hydrated, update } = usePreferences();
   const [status, setStatus] = useState<"setup" | "playing" | "summary">("setup");
-  const [mode, setMode] = useState<GameMode>(preferences.preferredMode);
+  const [mode, setMode] = usePreferenceState((saved) => saved.preferredMode);
   const [bankroll, setBankroll] = useState(0);
   const [starting, setStarting] = useState(0);
   const [bet, setBet] = useState<BaccaratBet>("banker");
@@ -118,7 +118,7 @@ function BaccaratTable() {
       setAmount(0);
       update({ preferredMode: config.mode, preferredGame: "baccarat" });
     },
-    [update],
+    [update, setMode],
   );
 
   function deal() {
@@ -215,6 +215,12 @@ function BaccaratTable() {
     return (
       <SiteShell>
         <SimpleSetup
+          /* The setup seeds its fields from these props once, on mount. The
+             stored preferences only arrive after that first render, so the form
+             is rebuilt the moment they land and picks them up as its starting
+             values. Before then it is showing the same defaults the server
+             rendered, so nothing the reader has touched is thrown away. */
+          key={hydrated ? "saved" : "defaults"}
           eyebrow="Baccarat"
           title="Start a session"
           intro="Three bets, no decisions after the deal, and the clearest house edge comparison on the site."

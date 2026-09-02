@@ -469,107 +469,121 @@ export function PokerTable({
       </div>
 
       <TableCamera focus={focusFor(state, Boolean(humanTurn))}>
-        <div className="relative flex min-h-0 flex-1 flex-col justify-between gap-3 overflow-y-auto px-3 py-10 sm:px-8 sm:py-12">
-          <div className="grid shrink-0 grid-cols-3 gap-2 pt-6 sm:gap-4 sm:pt-8">
-            {opponents.map((player) => (
-              <Seat
-                key={player.id}
-                player={player}
-                state={state}
-                reveal={reveal}
-                winners={winners}
-                handName={
-                  winners.has(player.id) ? handNames.get(player.id) : undefined
-                }
-                isTurn={
-                  state.players[state.toActIndex]?.id === player.id &&
-                  state.street !== "complete"
-                }
-                isButton={state.players[state.buttonIndex]?.id === player.id}
-                thinking={thinking?.playerId === player.id ? thinking : undefined}
-              />
-            ))}
-          </div>
+        {/*
+          Your own hand is not part of what scrolls.
 
-          <div className="flex shrink-0 flex-col items-center gap-4 py-2">
-            {/* The dealer stands at the top of the table with the board laid
-                out in front of them, which is both where a dealer is and the
-                thing that makes the burn and the flop read as one gesture. */}
-            <Dealer className="-mb-1 w-[clamp(5rem,17vw,7.5rem)]" />
-
-            <div className="flex items-center gap-4">
-              <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={street}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: DURATION.turn, ease: EASE.arrive }}
-                  className="font-mono text-[9px] tracking-[0.24em] text-[rgba(236,229,216,0.42)] uppercase"
-                >
-                  {street}
-                </motion.span>
-              </AnimatePresence>
-              <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
+          The three rows used to sit in one scrolling column, all of them
+          `shrink-0`, so on a phone the column ran about 210px past the height
+          it had and the row that went under the fold was the last one: your own
+          cards. The action rail would be asking you to call twenty while the
+          hand you were calling with was off screen and only reachable by
+          scrolling the felt. The opponents and the board scroll; the seat you
+          are playing stays where it is.
+        */}
+        <div className="relative flex min-h-0 flex-1 flex-col px-3 py-4 sm:px-8 sm:py-12">
+          <div className="flex min-h-0 flex-1 flex-col justify-between gap-3 overflow-y-auto">
+            <div className="grid shrink-0 grid-cols-3 gap-2 pt-2 sm:gap-4 sm:pt-8">
+              {opponents.map((player) => (
+                <Seat
+                  key={player.id}
+                  player={player}
+                  state={state}
+                  reveal={reveal}
+                  winners={winners}
+                  handName={
+                    winners.has(player.id) ? handNames.get(player.id) : undefined
+                  }
+                  isTurn={
+                    state.players[state.toActIndex]?.id === player.id &&
+                    state.street !== "complete"
+                  }
+                  isButton={state.players[state.buttonIndex]?.id === player.id}
+                  thinking={thinking?.playerId === player.id ? thinking : undefined}
+                />
+              ))}
             </div>
 
-            {/* The board. Cards travel from the shoe face down, settle, and are
-                then turned, which is the order it happens at a table and the
-                reason the turn and the river are worth waiting for. */}
-            <div className="relative flex min-h-[calc(clamp(2.6rem,8vw,3.9rem)*1.4)] items-center [--card-w:clamp(2.6rem,8vw,3.9rem)]">
-              <BurnCard trigger={reveal.burn} />
-              {reveal.board > 0 ? (
-                <div className="flex gap-1 sm:gap-1.5">
-                  {state.board.slice(0, reveal.board).map((card, index) => (
-                    <PlayingCard
-                      key={card.id}
-                      card={card}
-                      index={index}
-                      delay={0}
-                      origin="shoe"
-                      short
-                      square
-                      faceDown={index >= reveal.faceUp}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <span className="font-mono text-[9.5px] tracking-[0.2em] text-[rgba(236,229,216,0.22)] uppercase">
-                  No community cards yet
+            <div className="flex shrink-0 flex-col items-center gap-4 py-2">
+              {/* The dealer stands at the top of the table with the board laid
+                  out in front of them, which is both where a dealer is and the
+                  thing that makes the burn and the flop read as one gesture. */}
+              <Dealer className="-mb-1 w-[clamp(5rem,17vw,7.5rem)]" />
+
+              <div className="flex items-center gap-4">
+                <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={street}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: DURATION.turn, ease: EASE.arrive }}
+                    className="font-mono text-[9px] tracking-[0.24em] text-[rgba(236,229,216,0.42)] uppercase"
+                  >
+                    {street}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
+              </div>
+
+              {/* The board. Cards travel from the shoe face down, settle, and are
+                  then turned, which is the order it happens at a table and the
+                  reason the turn and the river are worth waiting for. */}
+              <div className="relative flex min-h-[calc(clamp(2.6rem,8vw,3.9rem)*1.4)] items-center [--card-w:clamp(2.6rem,8vw,3.9rem)]">
+                <BurnCard trigger={reveal.burn} />
+                {reveal.board > 0 ? (
+                  <div className="flex gap-1 sm:gap-1.5">
+                    {state.board.slice(0, reveal.board).map((card, index) => (
+                      <PlayingCard
+                        key={card.id}
+                        card={card}
+                        index={index}
+                        delay={0}
+                        origin="shoe"
+                        short
+                        square
+                        faceDown={index >= reveal.faceUp}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <span className="font-mono text-[9.5px] tracking-[0.2em] text-[rgba(236,229,216,0.22)] uppercase">
+                    No community cards yet
+                  </span>
+                )}
+              </div>
+
+              <div ref={potAnchor} className="flex flex-col items-center gap-1.5 px-4 py-1">
+                <PotStack state={state} shown={potShown} />
+                <span className="font-mono text-[9px] tracking-[0.22em] text-[rgba(236,229,216,0.42)] uppercase">
+                  Pot
                 </span>
-              )}
+                {/* The figure follows the clay. Chips land, then this catches up. */}
+                <Counter
+                  value={potShown}
+                  format={formatMoney}
+                  className="text-[19px] text-[rgba(236,229,216,0.95)]"
+                />
+              </div>
+
+              <DealerActivity />
+
+              {state.message ? (
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={state.message}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: DURATION.turn, ease: EASE.arrive }}
+                    className="display max-w-md text-center text-[clamp(0.95rem,2.4vw,1.2rem)] text-[rgba(236,229,216,0.82)] italic"
+                  >
+                    {state.message}
+                  </motion.p>
+                </AnimatePresence>
+              ) : null}
             </div>
 
-            <div ref={potAnchor} className="flex flex-col items-center gap-1.5 px-4 py-1">
-              <PotStack state={state} shown={potShown} />
-              <span className="font-mono text-[9px] tracking-[0.22em] text-[rgba(236,229,216,0.42)] uppercase">
-                Pot
-              </span>
-              {/* The figure follows the clay. Chips land, then this catches up. */}
-              <Counter
-                value={potShown}
-                format={formatMoney}
-                className="text-[19px] text-[rgba(236,229,216,0.95)]"
-              />
-            </div>
-
-            <DealerActivity />
-
-            {state.message ? (
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={state.message}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: DURATION.turn, ease: EASE.arrive }}
-                  className="display max-w-md text-center text-[clamp(0.95rem,2.4vw,1.2rem)] text-[rgba(236,229,216,0.82)] italic"
-                >
-                  {state.message}
-                </motion.p>
-              </AnimatePresence>
-            ) : null}
           </div>
 
           <div className="flex shrink-0 items-end justify-center gap-6">
