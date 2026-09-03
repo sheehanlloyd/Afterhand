@@ -10,8 +10,7 @@ import { CHIP_DROP_ATTRIBUTE, useChipDrag } from "@/components/chips/chip-drag";
 import { formatMoney } from "@/lib/utils/format";
 import { CHIP_DENOMINATIONS } from "./Rails";
 import { cardsRemaining } from "@/lib/games/deck";
-import { DealerActivity, DiscardTray, Shoe } from "@/components/game/table/DealerStation";
-import { Dealer } from "@/components/game/table/Dealer";
+import { DealerRail } from "@/components/game/table/DealerRail";
 import { TableCamera, type CameraFocus } from "@/components/game/table/TableCamera";
 import { useTableAnchor } from "@/lib/motion/table-space";
 import { useChipFlight } from "@/components/chips/ChipFlight";
@@ -24,10 +23,10 @@ import type { RevealCounts } from "@/lib/motion/deal-order";
  * rather than letting the outer hands fall off the felt.
  */
 const CARD_WIDTH_BY_HANDS: Record<number, string> = {
-  1: "clamp(3.1rem, 10vw, 5.3rem)",
-  2: "clamp(2.7rem, 8.5vw, 4.6rem)",
-  3: "clamp(2.3rem, 7vw, 4rem)",
-  4: "clamp(2rem, 6vw, 3.5rem)",
+  1: "clamp(3.8rem, 13vw, 5.6rem)",
+  2: "clamp(3.1rem, 10vw, 4.8rem)",
+  3: "clamp(2.5rem, 7.5vw, 4.1rem)",
+  4: "clamp(2.1rem, 6.2vw, 3.6rem)",
 };
 
 /** Where the camera looks, given what the table is doing. */
@@ -126,34 +125,28 @@ export function BlackjackTable({
         }}
       />
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4 font-mono text-[9px] tracking-[0.18em] text-[rgba(236,229,216,0.34)] uppercase sm:px-9 sm:py-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-3 font-mono text-[10px] tracking-[0.16em] text-fg-3 uppercase sm:px-9 sm:py-4">
         <span>Hand {String(game.handNumber).padStart(2, "0")}</span>
         <span>{decksLeft.toFixed(1)} decks in shoe</span>
       </div>
 
       <TableCamera focus={focusFor(game, resultVisible, holeUp)}>
-        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-between gap-[clamp(1rem,4vh,2.5rem)] overflow-y-auto px-4 pt-12 pb-7 sm:px-9 sm:pt-14 sm:pb-10">
-          {/* Dealer, with the shoe on their right and the tray on their left,
-              the way round a real table is laid out. Every card on the felt
-              came out of the block on the right and goes into the one on the
-              left, and you can watch both of them change size. */}
-          <div className="flex w-full shrink-0 items-start justify-between gap-3">
-            <DiscardTray
-              fill={game.shoe.position / total}
-              className="[--card-w:clamp(1.5rem,4.4vw,2.1rem)] pt-1"
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(1.5rem,6vh,4rem)] overflow-y-auto px-4 py-9 sm:px-9 sm:py-12">
+          {/* The dealer's station: shoe, marker and tray along the top edge,
+              then the dealer's own hand and total just below it. Nothing here
+              is a figure — the cards arriving from the shoe are the dealer's
+              presence. */}
+          <div className="flex w-full shrink-0 flex-col items-center gap-2.5">
+            <DealerRail
+              shoeFill={remaining / total}
+              trayFill={game.shoe.position / total}
+              className="[--card-w:clamp(1.4rem,4vw,1.9rem)]"
             />
 
-            <div ref={dealerAnchor} className="flex min-w-0 flex-1 flex-col items-center gap-3">
-              {/* The dealer. Their hands sit just above the cards they are
-                  about to put out, so a flick and the card leaving the shoe are
-                  the same gesture rather than two unrelated animations. */}
-              <Dealer className="-mb-2 w-[clamp(7rem,26vw,11rem)]" />
-              <span className="font-mono text-[9px] tracking-[0.26em] text-[rgba(236,229,216,0.42)] uppercase">
-                Dealer
-              </span>
+            <div ref={dealerAnchor} className="flex min-w-0 flex-col items-center gap-2">
               {visible.dealer > 0 ? (
                 <>
-                  <div className="[--card-w:clamp(3rem,9.5vw,4.9rem)]">
+                  <div className="[--card-w:clamp(3.2rem,10vw,5rem)]">
                     <CardRow
                       cards={game.dealer.cards}
                       visible={visible.dealer}
@@ -167,28 +160,20 @@ export function BlackjackTable({
                   />
                 </>
               ) : (
-                <div className="flex h-[calc(clamp(3rem,9.5vw,4.9rem)*1.4)] items-center">
-                  <span className="font-mono text-[9.5px] tracking-[0.2em] text-[rgba(236,229,216,0.22)] uppercase">
-                    Shoe ready
-                  </span>
+                <div className="flex h-[calc(clamp(3.2rem,10vw,5rem)*1.4)] items-center">
+                  <span className="label text-fg-3">Shoe ready</span>
                 </div>
               )}
-              <DealerActivity />
             </div>
-
-            <Shoe
-              fill={remaining / total}
-              className="[--card-w:clamp(1.5rem,4.4vw,2.1rem)] pt-1"
-            />
           </div>
 
           {/* The middle of the table: the house rules, then the dealer's line.
               A real table prints its terms across the felt, which is both what
               fills this space and the thing a new player most needs to read. */}
-          <div className="flex shrink-0 flex-col items-center gap-5 self-stretch px-2 text-center">
+          <div className="flex shrink-0 flex-col items-center gap-4 self-stretch px-2 text-center">
             <TableLegend rules={game.rules} />
 
-            <div className="flex min-h-[2.5rem] items-center">
+            <div className="flex min-h-[2.25rem] items-center">
               <AnimatePresence mode="wait">
                 <motion.p
                   key={game.dealerMessage + String(resultVisible)}
@@ -196,7 +181,7 @@ export function BlackjackTable({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: DURATION.turn, ease: EASE.arrive }}
-                  className="display text-[clamp(1.15rem,4.4vw,1.4rem)] text-[rgba(236,229,216,0.88)] italic"
+                  className="display text-[clamp(1.05rem,4vw,1.3rem)] text-fg-2 italic"
                 >
                   {game.dealerMessage}
                 </motion.p>
@@ -269,13 +254,13 @@ function TableLegend({ rules }: { rules: BlackjackState["rules"] }) {
   return (
     <div aria-hidden="true" className="flex w-full flex-col items-center gap-2.5">
       <div className="flex w-full items-center gap-3">
-        <span className="h-px flex-1 bg-[rgba(201,167,94,0.16)]" />
-        <span className="font-mono text-[clamp(0.5rem,2.4vw,0.62rem)] tracking-[0.28em] whitespace-nowrap text-[rgba(201,167,94,0.5)] uppercase">
+        <span className="h-px flex-1 bg-accent-2/25" />
+        <span className="font-mono text-[clamp(0.56rem,2.4vw,0.66rem)] tracking-[0.22em] whitespace-nowrap text-accent-2/85 uppercase">
           {payout}
         </span>
-        <span className="h-px flex-1 bg-[rgba(201,167,94,0.16)]" />
+        <span className="h-px flex-1 bg-accent-2/25" />
       </div>
-      <span className="font-mono text-[9px] tracking-[0.2em] text-[rgba(236,229,216,0.26)] uppercase">
+      <span className="label text-fg-3">
         Dealer {rules.dealerHitsSoft17 ? "hits" : "stands on"} soft 17
       </span>
     </div>
@@ -313,7 +298,7 @@ function BetSpot({
             ? "rgba(201,167,94,0.95)"
             : dragging
               ? "rgba(201,167,94,0.6)"
-              : "rgba(201,167,94,0.3)",
+              : "rgba(201,167,94,0.35)",
         }}
         transition={SPRING.ui}
         className="relative grid h-[clamp(6.5rem,28vw,8rem)] w-[clamp(6.5rem,28vw,8rem)] place-items-center rounded-full border border-dashed"
@@ -346,18 +331,16 @@ function BetSpot({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: DURATION.tooltip }}
-            className="tabular absolute -bottom-7 text-[15px] text-[rgba(236,229,216,0.92)]"
+            className="tabular absolute -bottom-7 text-[15px] font-medium text-fg"
           >
             {formatMoney(bet)}
           </motion.span>
         ) : (
-          <span className="font-mono text-[9px] tracking-[0.16em] text-[rgba(236,229,216,0.3)] uppercase">
-            Bet
-          </span>
+          <span className="label text-fg-3">Bet</span>
         )}
       </motion.div>
 
-      <span className="mt-4 font-mono text-[9px] tracking-[0.22em] text-[rgba(236,229,216,0.4)] uppercase">
+      <span className="label text-fg-3">
         {dragging ? "Drop to add" : "Tap or drag a chip"}
       </span>
     </div>

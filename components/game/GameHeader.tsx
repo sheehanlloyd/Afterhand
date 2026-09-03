@@ -58,7 +58,7 @@ export function GameHeader({
 
   return (
     <header className="relative z-30 shrink-0 border-b border-line bg-surface">
-      <div className="flex h-[52px] items-center gap-2.5 px-3 sm:gap-5 sm:px-6">
+      <div className="flex h-14 items-center gap-2.5 px-3 sm:gap-5 sm:px-6">
         <Logo responsiveWordmark className="shrink-0" />
 
         <span aria-hidden="true" className="hidden h-4 w-px shrink-0 bg-line-2 sm:block" />
@@ -68,7 +68,7 @@ export function GameHeader({
             {game}
           </h1>
           {mode ? (
-            <span className="shrink-0 border border-accent-2/50 px-1 py-[2px] font-mono text-[8.5px] tracking-[0.1em] text-accent-2 uppercase sm:px-1.5 sm:text-[9px] sm:tracking-[0.14em]">
+            <span className="shrink-0 border border-accent-2/50 px-1.5 py-[2px] font-mono text-[10px] tracking-[0.08em] text-accent-2 uppercase sm:px-2 sm:text-[10.5px] sm:tracking-[0.1em]">
               {mode}
             </span>
           ) : null}
@@ -98,7 +98,7 @@ export function GameHeader({
             onClick={onToggleSound}
             aria-pressed={soundEnabled}
             aria-label={soundEnabled ? "Mute sound" : "Turn sound on"}
-            className="grid h-8 w-8 shrink-0 place-items-center border border-line text-fg-2 transition-colors hover:border-line-2 hover:text-fg"
+            className="grid h-11 w-11 shrink-0 place-items-center border border-line text-fg-2 transition-colors hover:border-line-2 hover:text-fg"
           >
             <SoundIcon on={soundEnabled} />
           </button>
@@ -109,7 +109,7 @@ export function GameHeader({
               onClick={() => setOpen((value) => !value)}
               aria-expanded={open}
               aria-haspopup="menu"
-              className="h-8 shrink-0 border border-line px-2.5 font-mono text-[10px] tracking-[0.14em] text-fg-2 uppercase transition-colors hover:border-line-2 hover:text-fg sm:px-3"
+              className="h-11 shrink-0 border border-line px-3.5 font-mono text-[10px] tracking-[0.14em] text-fg-2 uppercase transition-colors hover:border-line-2 hover:text-fg sm:px-4"
             >
               Menu
             </button>

@@ -13,8 +13,19 @@ import { cn } from "@/lib/utils/cn";
  * Four tables, one projector. Only the selected film is mounted, so switching
  * tabs never leaves a second hand animating out of sight.
  */
-export function FilmGallery({ className }: { className?: string }) {
-  const [active, setActive] = useState<GameId>("blackjack");
+export function FilmGallery({
+  className,
+  /**
+   * Defaults to the second film rather than the first: the hero above this
+   * gallery already plays the blackjack hand, so opening here on the same
+   * table would run the identical film twice on one page.
+   */
+  initialGame = FILM_ORDER[1] ?? FILM_ORDER[0],
+}: {
+  className?: string;
+  initialGame?: GameId;
+}) {
+  const [active, setActive] = useState<GameId>(initialGame);
   const script = FILMS[active];
   const game = GAMES.find((entry) => entry.id === active)!;
 

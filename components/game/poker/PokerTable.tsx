@@ -13,11 +13,9 @@ import { ChipFace, chipBreakdown } from "@/components/chips/Chip";
 import { POKER_CHIPS } from "@/lib/store/poker-session";
 import { formatMoney } from "@/lib/utils/format";
 import { Counter } from "@/components/ui/Counter";
-import { DealerActivity, DiscardTray, Shoe } from "@/components/game/table/DealerStation";
-import { Dealer } from "@/components/game/table/Dealer";
+import { DealerRail } from "@/components/game/table/DealerRail";
 import { TableCamera, type CameraFocus } from "@/components/game/table/TableCamera";
 import { WinBurst } from "@/components/game/table/WinBurst";
-import { PlayerAvatar } from "@/components/game/table/PlayerAvatar";
 import { TurnRing } from "@/components/game/table/TurnRing";
 import { useTableAnchor } from "@/lib/motion/table-space";
 import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
@@ -57,6 +55,47 @@ function focusFor(state: PokerState, humanTurn: boolean): CameraFocus {
   return "wide";
 }
 
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * The seat marker.
+ *
+ * Not a face — a monogram in a ring, the way a scorecard or a seating chart
+ * names a player. The ring's weight and fill are what carry turn/won/folded
+ * state; nothing here moves on its own.
+ */
+function SeatMonogram({
+  name,
+  mood,
+  className,
+}: {
+  name: string;
+  mood: "idle" | "thinking" | "folded" | "won";
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid aspect-square place-items-center rounded-full border-2 font-mono text-[13px] tracking-[0.04em] transition-colors",
+        mood === "thinking"
+          ? "border-accent-2 bg-accent-2/12 text-accent-2"
+          : mood === "won"
+            ? "border-positive bg-positive/12 text-positive"
+            : mood === "folded"
+              ? "border-line-2 text-fg-3 opacity-50"
+              : "border-line-2 text-fg-2",
+        className,
+      )}
+    >
+      {initialsOf(name)}
+    </div>
+  );
+}
+
 function Seat({
   player,
   state,
@@ -66,6 +105,8 @@ function Seat({
   winners,
   handName,
   thinking,
+  style,
+  className,
 }: {
   player: PokerPlayer;
   state: PokerState;
@@ -76,6 +117,8 @@ function Seat({
   handName?: string;
   /** Set only while this seat is actually deciding, and only for opponents. */
   thinking?: { startedAt: number; endsAt: number };
+  style?: React.CSSProperties;
+  className?: string;
 }) {
   const action = lastActionFor(state, player.id);
   const anchor = useTableAnchor(`seat:${player.id}`);
@@ -86,50 +129,42 @@ function Seat({
   return (
     <motion.div
       ref={anchor}
+      style={style}
       className={cn(
-        "relative flex min-w-0 flex-col items-center gap-2 border px-1.5 py-2.5 sm:px-3 sm:py-3",
-        isTurn
-          ? "border-[rgba(201,167,94,0.7)]"
-          : won
-            ? "border-positive/60"
-            : "border-[rgba(236,229,216,0.14)]",
+        "relative flex min-w-0 flex-col items-center gap-1 px-1",
+        className,
       )}
-      animate={{
-        opacity: player.folded ? 0.4 : 1,
-        backgroundColor: isTurn
-          ? "rgba(201,167,94,0.07)"
-          : won
-            ? "rgba(127,177,149,0.08)"
-            : "rgba(201,167,94,0)",
-      }}
+      animate={{ opacity: player.folded ? 0.4 : 1 }}
       transition={{ duration: DURATION.turn, ease: EASE.arrive }}
     >
-      {/* The seat with the decision breathes. It is the only thing on the table
-          that is allowed to, which is what makes it findable at a glance. */}
+      {/* No box, no border — the seat is a place on the felt, not a card. A
+          soft pool of light under the monogram is the only boundary, and only
+          when it means something (the turn, or a won hand). */}
       <AnimatePresence>
-        {isTurn ? (
+        {isTurn || won ? (
           <motion.span
-            key="turn-glow"
+            key="seat-wash"
             aria-hidden="true"
-            className="pointer-events-none absolute -inset-px -z-10"
+            className="pointer-events-none absolute -inset-x-3 -inset-y-2 -z-10 rounded-full"
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ opacity: { duration: 2.6, repeat: Infinity, ease: EASE.drift } }}
+            transition={{ duration: DURATION.reveal, ease: EASE.arrive }}
             style={{
-              background:
-                "radial-gradient(closest-side, rgba(201,167,94,0.16), rgba(201,167,94,0) 76%)",
+              background: isTurn
+                ? "radial-gradient(closest-side, rgba(201,167,94,0.14), rgba(201,167,94,0) 78%)"
+                : "radial-gradient(closest-side, rgba(127,177,149,0.14), rgba(127,177,149,0) 78%)",
             }}
           />
         ) : null}
       </AnimatePresence>
 
-      {/* The person in the seat. They breathe, they glance up, and when they
-          fold they sit back — and that is the whole of it, because an avatar
-          that moves as much as the dealer does competes with the cards. */}
-      <div className="relative w-[clamp(2.5rem,7vw,3.4rem)]">
-        <PlayerAvatar
-          seed={player.id}
+      {/* The seat's identity is typographic: a monogram in a ring. The ring
+          carries turn/won/folded state; nothing here moves on its own, since
+          an avatar animating competes with the cards. */}
+      <div className="relative w-[clamp(2.1rem,6vw,2.9rem)]">
+        <SeatMonogram
+          name={player.name}
           mood={
             player.folded
               ? "folded"
@@ -153,20 +188,20 @@ function Seat({
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="truncate font-mono text-[10px] tracking-[0.14em] text-[rgba(236,229,216,0.8)] uppercase">
+        <span className="truncate font-mono text-[11px] tracking-[0.1em] text-fg uppercase">
           {player.name}
         </span>
         {isButton ? (
           <span
             aria-label="Dealer button"
-            className="grid h-4 w-4 place-items-center rounded-full border border-[rgba(236,229,216,0.5)] font-mono text-[8px] text-[rgba(236,229,216,0.8)]"
+            className="grid h-4 w-4 place-items-center rounded-full border border-accent-2/70 bg-accent-2/12 font-mono text-[8px] font-bold text-accent-2"
           >
             D
           </span>
         ) : null}
       </div>
 
-      <div className="relative [--card-w:clamp(1.7rem,4.6vw,2.4rem)]">
+      <div className="relative [--card-w:clamp(1.5rem,4vw,2.1rem)]">
         {won ? <WinBurst active seed={player.id} count={12} /> : null}
         {shown ? (
           <CardRow cards={player.hole} origin={`seat:${player.id}`} short square />
@@ -174,7 +209,7 @@ function Seat({
           /* Folding is a push, not a deletion: the cards go towards the muck
              and the seat is left empty behind them. */
           <motion.div
-            className="h-[calc(clamp(1.7rem,4.6vw,2.4rem)*1.4)]"
+            className="h-[calc(clamp(1.5rem,4vw,2.1rem)*1.4)]"
             initial={{ opacity: 0.7, y: 0 }}
             animate={{ opacity: 0, y: -14 }}
             transition={{ duration: DURATION.deal, ease: EASE.leave }}
@@ -189,19 +224,21 @@ function Seat({
             square
           />
         ) : (
-          <div className="h-[calc(clamp(1.7rem,4.6vw,2.4rem)*1.4)]" />
+          <div className="h-[calc(clamp(1.5rem,4vw,2.1rem)*1.4)]" />
         )}
       </div>
 
-      <Counter
-        value={player.stack}
-        format={formatMoney}
-        delay={0.2}
-        className="text-[12.5px] text-[rgba(236,229,216,0.92)]"
-      />
+      <div className="flex items-center gap-1.5">
+        <Counter value={player.stack} format={formatMoney} delay={0.2} className="text-[13px] text-fg" />
+        {player.committed > 0 ? (
+          <span className="tabular border border-line-2 px-1.5 py-[2px] text-[11px] text-fg-2">
+            {formatMoney(player.committed)}
+          </span>
+        ) : null}
+      </div>
 
       {/* What they just did, said beside them rather than only in the log. */}
-      <div className="flex min-h-[1.1rem] items-center">
+      <div className="flex min-h-[0.9rem] items-center">
         <AnimatePresence mode="wait">
           {player.allIn || action ? (
             <motion.span
@@ -210,19 +247,13 @@ function Seat({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: DURATION.turn, ease: EASE.arrive }}
-              className="font-mono text-[9px] tracking-[0.12em] whitespace-nowrap text-[rgba(201,167,94,0.85)] uppercase"
+              className="font-mono text-[10px] tracking-[0.08em] whitespace-nowrap text-accent-2 uppercase"
             >
               {player.allIn ? "All in" : action}
             </motion.span>
           ) : null}
         </AnimatePresence>
       </div>
-
-      {player.committed > 0 ? (
-        <span className="tabular border border-[rgba(236,229,216,0.2)] px-1.5 py-[2px] text-[11px] text-[rgba(236,229,216,0.75)]">
-          {formatMoney(player.committed)}
-        </span>
-      ) : null}
 
       <AnimatePresence>
         {handName ? (
@@ -284,14 +315,12 @@ function PotStack({ state, shown }: { state: PokerState; shown: number }) {
   if (visible.length === 0) return <div className="h-6" />;
 
   return (
-    <div className="flex min-h-[2.9rem] items-end justify-center gap-4 [--chip-w:1.55rem]">
+    <div className="flex min-h-[2.2rem] items-end justify-center gap-4 [--chip-w:1.3rem]">
       {visible.map((amount, index) => (
         <div key={index} className="flex flex-col items-center gap-1.5">
           <Pile amount={amount} />
           {visible.length > 1 ? (
-            <span className="font-mono text-[7.5px] tracking-[0.14em] text-[rgba(236,229,216,0.38)] uppercase">
-              {index === 0 ? "Main" : `Side ${index}`}
-            </span>
+            <span className="label text-fg-3">{index === 0 ? "Main" : `Side ${index}`}</span>
           ) : null}
         </div>
       ))}
@@ -454,18 +483,11 @@ export function PokerTable({
         }}
       />
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4 font-mono text-[9px] tracking-[0.18em] text-[rgba(236,229,216,0.34)] uppercase sm:px-9 sm:py-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-3 font-mono text-[10px] tracking-[0.16em] text-fg-3 uppercase sm:px-9 sm:py-4">
         <span>Hand {String(state.handNumber).padStart(2, "0")}</span>
         <span>
           Blinds {formatMoney(state.smallBlind)} / {formatMoney(state.bigBlind)}
         </span>
-      </div>
-
-      {/* The dealer's furniture, tucked into the top corners so it does not
-          compete with the seats but is visibly the source of every card. */}
-      <div className="pointer-events-none absolute inset-x-0 top-9 z-10 flex items-start justify-between px-4 sm:top-12 sm:px-8 [--card-w:clamp(1.4rem,3.8vw,1.9rem)]">
-        <DiscardTray fill={state.deckPosition / deckSize} />
-        <Shoe fill={(deckSize - state.deckPosition) / deckSize} />
       </div>
 
       <TableCamera focus={focusFor(state, Boolean(humanTurn))}>
@@ -480,37 +502,60 @@ export function PokerTable({
           scrolling the felt. The opponents and the board scroll; the seat you
           are playing stays where it is.
         */}
-        <div className="relative flex min-h-0 flex-1 flex-col px-3 py-4 sm:px-8 sm:py-12">
-          <div className="flex min-h-0 flex-1 flex-col justify-between gap-3 overflow-y-auto">
-            <div className="grid shrink-0 grid-cols-3 gap-2 pt-2 sm:gap-4 sm:pt-8">
-              {opponents.map((player) => (
-                <Seat
-                  key={player.id}
-                  player={player}
-                  state={state}
-                  reveal={reveal}
-                  winners={winners}
-                  handName={
-                    winners.has(player.id) ? handNames.get(player.id) : undefined
-                  }
-                  isTurn={
-                    state.players[state.toActIndex]?.id === player.id &&
-                    state.street !== "complete"
-                  }
-                  isButton={state.players[state.buttonIndex]?.id === player.id}
-                  thinking={thinking?.playerId === player.id ? thinking : undefined}
-                />
-              ))}
+        <div className="relative flex min-h-0 flex-1 flex-col px-3 py-2 sm:px-8 sm:py-3">
+          <div className="flex min-h-0 flex-1 flex-col justify-center gap-[clamp(0.375rem,3vh,2rem)] overflow-y-auto">
+            {/* The dealer's presence: shoe and tray either side of the marker
+                and status, visibly the source of every card without taking a
+                figure's worth of room. */}
+            <div className="flex shrink-0 justify-center pb-1 [--card-w:clamp(1.2rem,3.2vw,1.5rem)]">
+              <DealerRail
+                shoeFill={(deckSize - state.deckPosition) / deckSize}
+                trayFill={state.deckPosition / deckSize}
+                compact
+              />
+            </div>
+            {/* Opponents sit spatially around the felt's far rim rather than in
+                a grid of boxes — the oval rail drawn behind them, the spread
+                across it, and a few degrees of lean toward the middle are what
+                imply the table's curve without spending the vertical room a
+                true arc would cost. */}
+            <div className="relative shrink-0 pt-1 pb-2">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-[4%] inset-y-[-10%] rounded-[50%] border"
+                style={{ borderColor: "rgba(201,167,94,0.12)" }}
+              />
+              <div className="relative flex items-start justify-between gap-1">
+                {opponents.map((player, index) => {
+                  const t = opponents.length > 1 ? index / (opponents.length - 1) : 0.5;
+                  const lean = (t - 0.5) * -8;
+                  return (
+                    <Seat
+                      key={player.id}
+                      player={player}
+                      state={state}
+                      reveal={reveal}
+                      winners={winners}
+                      handName={
+                        winners.has(player.id) ? handNames.get(player.id) : undefined
+                      }
+                      isTurn={
+                        state.players[state.toActIndex]?.id === player.id &&
+                        state.street !== "complete"
+                      }
+                      isButton={state.players[state.buttonIndex]?.id === player.id}
+                      thinking={thinking?.playerId === player.id ? thinking : undefined}
+                      className="min-w-0 flex-1"
+                      style={{ transform: `rotate(${lean}deg)` }}
+                    />
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="flex shrink-0 flex-col items-center gap-4 py-2">
-              {/* The dealer stands at the top of the table with the board laid
-                  out in front of them, which is both where a dealer is and the
-                  thing that makes the burn and the flop read as one gesture. */}
-              <Dealer className="-mb-1 w-[clamp(5rem,17vw,7.5rem)]" />
-
+            <div className="flex shrink-0 flex-col items-center gap-1 py-0.5">
               <div className="flex items-center gap-4">
-                <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
+                <span className="h-px w-8 bg-accent-2/30" />
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={street}
@@ -518,18 +563,18 @@ export function PokerTable({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: DURATION.turn, ease: EASE.arrive }}
-                    className="font-mono text-[9px] tracking-[0.24em] text-[rgba(236,229,216,0.42)] uppercase"
+                    className="label text-fg-2"
                   >
                     {street}
                   </motion.span>
                 </AnimatePresence>
-                <span className="h-px w-8 bg-[rgba(201,167,94,0.25)]" />
+                <span className="h-px w-8 bg-accent-2/30" />
               </div>
 
               {/* The board. Cards travel from the shoe face down, settle, and are
                   then turned, which is the order it happens at a table and the
                   reason the turn and the river are worth waiting for. */}
-              <div className="relative flex min-h-[calc(clamp(2.6rem,8vw,3.9rem)*1.4)] items-center [--card-w:clamp(2.6rem,8vw,3.9rem)]">
+              <div className="relative flex min-h-[calc(clamp(1.9rem,6vw,2.8rem)*1.4)] items-center [--card-w:clamp(1.9rem,6vw,2.8rem)]">
                 <BurnCard trigger={reveal.burn} />
                 {reveal.board > 0 ? (
                   <div className="flex gap-1 sm:gap-1.5">
@@ -547,26 +592,16 @@ export function PokerTable({
                     ))}
                   </div>
                 ) : (
-                  <span className="font-mono text-[9.5px] tracking-[0.2em] text-[rgba(236,229,216,0.22)] uppercase">
-                    No community cards yet
-                  </span>
+                  <span className="label text-fg-3">No community cards yet</span>
                 )}
               </div>
 
-              <div ref={potAnchor} className="flex flex-col items-center gap-1.5 px-4 py-1">
+              <div ref={potAnchor} className="flex flex-col items-center gap-1 px-4 py-0.5">
                 <PotStack state={state} shown={potShown} />
-                <span className="font-mono text-[9px] tracking-[0.22em] text-[rgba(236,229,216,0.42)] uppercase">
-                  Pot
-                </span>
+                <span className="label text-fg-2">Pot</span>
                 {/* The figure follows the clay. Chips land, then this catches up. */}
-                <Counter
-                  value={potShown}
-                  format={formatMoney}
-                  className="text-[19px] text-[rgba(236,229,216,0.95)]"
-                />
+                <Counter value={potShown} format={formatMoney} className="text-[16px] font-medium text-fg" />
               </div>
-
-              <DealerActivity />
 
               {state.message ? (
                 <AnimatePresence mode="wait">
@@ -576,7 +611,7 @@ export function PokerTable({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: DURATION.turn, ease: EASE.arrive }}
-                    className="display max-w-md text-center text-[clamp(0.95rem,2.4vw,1.2rem)] text-[rgba(236,229,216,0.82)] italic"
+                    className="display max-w-md text-center text-[clamp(0.95rem,2.4vw,1.2rem)] text-fg-2 italic"
                   >
                     {state.message}
                   </motion.p>
@@ -593,8 +628,8 @@ export function PokerTable({
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    "font-mono text-[9px] tracking-[0.22em] uppercase transition-colors",
-                    humanTurn ? "text-[rgba(201,167,94,0.95)]" : "text-[rgba(236,229,216,0.42)]",
+                    "label transition-colors",
+                    humanTurn ? "text-accent-2" : "text-fg-2",
                   )}
                 >
                   You
@@ -616,7 +651,7 @@ export function PokerTable({
                 </AnimatePresence>
               </div>
 
-              <div className="[--card-w:clamp(3rem,9.5vw,4.6rem)]">
+              <div className="[--card-w:clamp(2.7rem,8.5vw,4.1rem)]">
                 {humanDealt > 0 ? (
                   <CardRow cards={human.hole} visible={humanDealt} interactive />
                 ) : (
@@ -636,10 +671,10 @@ export function PokerTable({
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: DURATION.turn, ease: EASE.arrive }}
                     className={cn(
-                      "border px-2 py-[3px] font-mono text-[9.5px] tracking-[0.1em] uppercase",
+                      "border px-2 py-[3px] font-mono text-[10px] tracking-[0.08em] uppercase",
                       winners.has(human.id)
                         ? "border-positive/70 text-positive"
-                        : "border-[rgba(236,229,216,0.22)] text-[rgba(236,229,216,0.82)]",
+                        : "border-line-2 text-fg-2",
                     )}
                   >
                     {made.description}
@@ -652,10 +687,10 @@ export function PokerTable({
                   value={human.stack}
                   format={formatMoney}
                   delay={0.2}
-                  className="text-[13px] text-[rgba(236,229,216,0.92)]"
+                  className="text-[15px] font-medium text-fg"
                 />
                 {human.committed > 0 ? (
-                  <span className="tabular border border-[rgba(236,229,216,0.2)] px-1.5 py-[2px] text-[11px] text-[rgba(236,229,216,0.75)]">
+                  <span className="tabular border border-line-2 px-1.5 py-[2px] text-[11px] text-fg-2">
                     {formatMoney(human.committed)}
                   </span>
                 ) : null}

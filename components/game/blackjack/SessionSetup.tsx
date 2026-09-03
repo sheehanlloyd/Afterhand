@@ -343,21 +343,22 @@ function TablePlacard({
   ];
 
   return (
-    <div className="felt border border-[rgba(201,167,94,0.28)] p-6">
-      <div className="border border-[rgba(201,167,94,0.16)] p-5">
-        <p className="text-center font-mono text-[9px] tracking-[0.3em] text-[rgba(201,167,94,0.75)] uppercase">
+    <div className="felt border border-brass/30 p-6">
+      {/* This placard sits on the felt's own dark ground regardless of the
+          page around it, so its type uses the felt's fixed ivory/brass
+          palette rather than the paper/room tokens that swap with the page. */}
+      <div className="border border-brass/18 p-5">
+        <p className="text-center font-mono text-[10px] tracking-[0.22em] text-brass uppercase">
           Table rules
         </p>
-        <p className="display mt-3 text-center text-[26px] leading-none text-[#ece5d8]">
-          Blackjack
-        </p>
+        <p className="display mt-3 text-center text-[26px] leading-none text-ivory">Blackjack</p>
         <dl className="mt-6 space-y-2.5">
           {lines.map(([term, value]) => (
             <div key={term} className="flex items-baseline justify-between gap-4">
-              <dt className="font-mono text-[9.5px] tracking-[0.12em] text-[rgba(236,229,216,0.42)] uppercase">
+              <dt className="font-mono text-[10px] tracking-[0.1em] text-ivory/55 uppercase">
                 {term}
               </dt>
-              <dd className="tabular text-[12.5px] text-[rgba(236,229,216,0.9)]">{value}</dd>
+              <dd className="tabular text-[13px] text-ivory/90">{value}</dd>
             </div>
           ))}
         </dl>

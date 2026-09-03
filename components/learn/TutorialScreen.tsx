@@ -39,21 +39,26 @@ export function TutorialScreen({ tutorial }: { tutorial: Tutorial }) {
         <p className="mt-5 text-[15.5px] leading-relaxed text-fg-2">{tutorial.intro}</p>
       </header>
 
-      <nav aria-label="Tutorial progress" className="mt-10 flex items-center gap-2">
-        {tutorial.steps.map((entry, index) => (
-          <button
-            key={entry.question}
-            type="button"
-            onClick={() => go(index)}
-            aria-label={`Step ${index + 1}: ${entry.question}`}
-            aria-current={index === step ? "step" : undefined}
-            className={cn(
-              "h-[3px] flex-1 transition-colors",
-              index <= step ? "bg-accent" : "bg-fg/12 hover:bg-fg/25",
-            )}
-          />
-        ))}
-      </nav>
+      <div className="mt-10 flex items-center justify-between gap-4">
+        <nav aria-label="Tutorial progress" className="flex flex-1 items-center gap-2">
+          {tutorial.steps.map((entry, index) => (
+            <button
+              key={entry.question}
+              type="button"
+              onClick={() => go(index)}
+              aria-label={`Step ${index + 1}: ${entry.question}`}
+              aria-current={index === step ? "step" : undefined}
+              className={cn(
+                "h-[3px] flex-1 transition-colors",
+                index <= step ? "bg-accent" : "bg-fg/12 hover:bg-fg/25",
+              )}
+            />
+          ))}
+        </nav>
+        <span className="tabular label shrink-0 text-fg-2">
+          {step + 1} / {total}
+        </span>
+      </div>
 
       <div className="relative mt-8 min-h-[22rem]">
         <AnimatePresence mode="wait" initial={false}>
@@ -115,7 +120,7 @@ export function TutorialScreen({ tutorial }: { tutorial: Tutorial }) {
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <Button
-          variant="ghost"
+          variant="secondary"
           size="md"
           plate
           onClick={() => go(step - 1)}

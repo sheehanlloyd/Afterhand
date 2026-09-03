@@ -34,7 +34,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import { Field } from "@/components/ui/Field";
 import { BettingBoard } from "./BettingBoard";
 import { RouletteWheel } from "./Wheel";
-import { Dealer } from "@/components/game/table/Dealer";
+import { DealerRail } from "@/components/game/table/DealerRail";
 import { useDealer } from "@/lib/store/dealer";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { playSound } from "@/lib/sound";
@@ -419,16 +419,16 @@ export function RouletteScreen() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-2 border border-[rgba(201,167,94,0.14)] sm:inset-4"
         />
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-4 font-mono text-[9px] tracking-[0.18em] text-[rgba(236,229,216,0.34)] uppercase sm:px-9 sm:py-6">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-3 font-mono text-[10px] tracking-[0.16em] text-fg-3 uppercase sm:px-9 sm:py-4">
           <span>Spin {String(spins + 1).padStart(2, "0")}</span>
           <span>{variant === "american" ? "American wheel" : "European wheel"}</span>
         </div>
 
-        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-12 sm:px-8">
-          {/* The croupier. They do less here than at a card table — the wheel
-              does the work — so they mostly stand, and sweep the layout when
-              the ball drops. */}
-          <Dealer className="-mb-2 w-[clamp(5rem,18vw,8rem)]" />
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-5 overflow-y-auto px-4 pt-9 pb-8 sm:px-8 sm:pt-12">
+          {/* The croupier does less here than at a card table — the wheel does
+              the work — so their presence is the marker and a line of status,
+              nothing more. */}
+          <DealerRail withCards={false} label="Wheel" />
 
           <div className="flex w-full max-w-4xl flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-center lg:gap-10">
             <div className="flex shrink-0 flex-col items-center gap-3">
@@ -446,19 +446,19 @@ export function RouletteScreen() {
                       <span
                         key={`${pocket}-${index}`}
                         className={cn(
-                          "grid h-5 min-w-5 place-items-center border px-1 font-mono text-[9px]",
+                          "grid h-5 min-w-5 place-items-center border-2 px-1 font-mono text-[10px] font-medium",
                           pocketColour(pocket) === "red"
-                            ? "border-[rgba(205,128,121,0.6)] text-[rgba(205,128,121,0.95)]"
+                            ? "border-negative/70 text-negative"
                             : pocketColour(pocket) === "black"
-                              ? "border-[rgba(236,229,216,0.3)] text-[rgba(236,229,216,0.8)]"
-                              : "border-[rgba(127,177,149,0.6)] text-[rgba(127,177,149,0.95)]",
+                              ? "border-line-2 text-fg"
+                              : "border-positive/70 text-positive",
                         )}
                       >
                         {pocket}
                       </span>
                     ))}
                   </div>
-                  <span className="font-mono text-[8.5px] tracking-[0.14em] text-[rgba(236,229,216,0.25)] uppercase">
+                  <span className="label text-fg-3">
                     Previous spins do not influence the next one
                   </span>
                 </div>
@@ -478,21 +478,17 @@ export function RouletteScreen() {
 
               {bets.length > 0 ? (
                 <div className="mx-auto mt-4 max-w-3xl">
-                  <div className="flex items-center justify-between gap-3 border-b border-[rgba(236,229,216,0.14)] pb-1.5">
-                    <span className="font-mono text-[9px] tracking-[0.16em] text-[rgba(236,229,216,0.4)] uppercase">
-                      Your bets
-                    </span>
-                    <span className="font-mono text-[9px] tracking-[0.16em] text-[rgba(236,229,216,0.4)] uppercase">
-                      Chance / Pays
-                    </span>
+                  <div className="flex items-center justify-between gap-3 border-b border-line pb-1.5">
+                    <span className="label text-fg-3">Your bets</span>
+                    <span className="label text-fg-3">Chance / Pays</span>
                   </div>
-                  <ul className="divide-y divide-[rgba(236,229,216,0.1)]">
+                  <ul className="divide-y divide-line">
                     {bets.map((bet) => {
                       const settlement = settlements?.find((entry) => entry.bet.id === bet.id);
                       return (
                         <li
                           key={bet.id}
-                          className="flex items-center gap-3 py-1.5 text-[11.5px] text-[rgba(236,229,216,0.8)]"
+                          className="flex items-center gap-3 py-1.5 text-[12px] text-fg"
                         >
                           <span className="min-w-0 flex-1 truncate">
                             {BET_LABEL[bet.type]}
@@ -506,16 +502,14 @@ export function RouletteScreen() {
                               : ""}
                           </span>
                           <span className="tabular shrink-0">{formatMoney(bet.amount)}</span>
-                          <span className="tabular shrink-0 text-[rgba(236,229,216,0.5)]">
+                          <span className="tabular shrink-0 text-fg-3">
                             {formatPercent(winProbability(bet, variant), 1)} / {PAYOUTS[bet.type]} to 1
                           </span>
                           {settlement ? (
                             <span
                               className={cn(
                                 "tabular w-16 shrink-0 text-right",
-                                settlement.net > 0
-                                  ? "text-[rgba(127,177,149,0.95)]"
-                                  : "text-[rgba(205,128,121,0.95)]",
+                                settlement.net > 0 ? "text-positive" : "text-negative",
                               )}
                             >
                               {settlement.net > 0 ? "+" : ""}

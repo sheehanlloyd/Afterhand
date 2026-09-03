@@ -37,9 +37,8 @@ import { playSound, playSoundIn } from "@/lib/sound";
 import { TableSpaceProvider, useTableAnchor, useTableSpace } from "@/lib/motion/table-space";
 import { moveChips } from "@/lib/motion/chip-bus";
 import { ChipFlightLayer } from "@/components/chips/ChipFlight";
-import { DiscardTray, Shoe as ShoeBlock } from "@/components/game/table/DealerStation";
+import { DealerRail } from "@/components/game/table/DealerRail";
 import { TableCamera } from "@/components/game/table/TableCamera";
-import { Dealer } from "@/components/game/table/Dealer";
 import { useDealer } from "@/lib/store/dealer";
 import { applyStep, revealSteps, type RevealCounts } from "@/lib/motion/deal-order";
 import { DURATION, RHYTHM } from "@/lib/motion/tokens";
@@ -52,6 +51,29 @@ const BET_INFO: Array<{ id: BaccaratBet; label: string; payout: string }> = [
   { id: "banker", label: "Banker", payout: "1 to 1 less 5%" },
   { id: "tie", label: "Tie", payout: "8 to 1" },
 ];
+
+/**
+ * Player, Banker and Tie each keep one hue throughout the table — the bet
+ * selector, the two hands, and the outcome badge — so the three read apart at
+ * a glance rather than by the word printed on them.
+ */
+const SIDE_TONE: Record<BaccaratBet, { text: string; border: string; wash: string }> = {
+  player: {
+    text: "text-positive",
+    border: "border-positive/70",
+    wash: "bg-positive/10",
+  },
+  banker: {
+    text: "text-negative",
+    border: "border-negative/70",
+    wash: "bg-negative/10",
+  },
+  tie: {
+    text: "text-accent-2",
+    border: "border-accent-2/70",
+    wash: "bg-accent-2/10",
+  },
+};
 
 interface RoundLog {
   number: number;
@@ -418,24 +440,19 @@ function BaccaratTable() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-2 border border-[rgba(201,167,94,0.14)] sm:inset-4"
         />
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-5 py-4 font-mono text-[9px] tracking-[0.18em] text-[rgba(236,229,216,0.34)] uppercase sm:px-9 sm:py-6">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-3 font-mono text-[10px] tracking-[0.16em] text-fg-3 uppercase sm:px-9 sm:py-4">
           <span>Hand {String(log.length + (round ? 1 : 0)).padStart(2, "0")}</span>
           <span>{decksLeft.toFixed(1)} decks in shoe</span>
         </div>
 
-        {/* Every card on this felt comes out of the block on the right and ends
-            up in the one on the left, and both of them change size as it does. */}
-        <div className="pointer-events-none absolute inset-x-0 top-9 z-10 flex items-start justify-between px-4 sm:top-12 sm:px-8 [--card-w:clamp(1.4rem,3.8vw,1.9rem)]">
-          <DiscardTray fill={shoeUsed} />
-          <ShoeBlock fill={1 - shoeUsed} />
+        {/* The dealer's presence is the equipment: the shoe, the tray, and a
+            small marker — never a figure. */}
+        <div className="relative z-10 flex justify-center pt-9 pb-2 sm:pt-12 [--card-w:clamp(1.4rem,3.8vw,1.9rem)]">
+          <DealerRail shoeFill={1 - shoeUsed} trayFill={shoeUsed} />
         </div>
 
         <TableCamera focus={revealing ? "dealer" : settled ? "result" : "wide"}>
-        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-8 overflow-y-auto px-4 py-12 sm:px-9">
-          {/* Baccarat is dealt from the shoe rather than the hand, so the
-              dealer's part is smaller here: they draw, turn and call it. */}
-          <Dealer className="-mb-4 w-[clamp(5.5rem,20vw,8.5rem)]" />
-
+        <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-8 overflow-y-auto px-4 py-6 sm:px-9">
           <div className="grid w-full max-w-2xl grid-cols-2 gap-6 sm:gap-12">
             {(["player", "banker"] as const).map((side) => {
               const cards = round
@@ -445,12 +462,13 @@ function BaccaratTable() {
                 : [];
               const total = round ? (side === "player" ? round.playerTotal : round.bankerTotal) : null;
               const winner = round && !revealing && round.outcome === side;
+              const tone = SIDE_TONE[side];
               return (
                 <div key={side} className="flex flex-col items-center gap-3">
                   <span
                     className={cn(
-                      "font-mono text-[9px] tracking-[0.24em] uppercase",
-                      winner ? "text-[rgba(201,167,94,0.95)]" : "text-[rgba(236,229,216,0.42)]",
+                      "label",
+                      winner ? tone.text : "text-fg-3",
                     )}
                   >
                     {side}
@@ -463,18 +481,14 @@ function BaccaratTable() {
                         square
                       />
                     ) : (
-                      <span className="font-mono text-[9px] tracking-[0.18em] text-[rgba(236,229,216,0.2)] uppercase">
-                        Waiting
-                      </span>
+                      <span className="label text-fg-3">Waiting</span>
                     )}
                   </div>
                   {total !== null ? (
                     <span
                       className={cn(
-                        "tabular border px-2.5 py-1 text-[15px]",
-                        winner
-                          ? "border-[rgba(201,167,94,0.7)] text-[rgba(236,229,216,0.98)]"
-                          : "border-[rgba(236,229,216,0.2)] text-[rgba(236,229,216,0.8)]",
+                        "tabular border px-2.5 py-1 text-[15px] font-medium",
+                        winner ? cn(tone.border, tone.text) : "border-line-2 text-fg-2",
                       )}
                     >
                       {total}
@@ -490,6 +504,7 @@ function BaccaratTable() {
             {BET_INFO.map((option) => {
               const active = bet === option.id;
               const disabled = round !== null;
+              const tone = SIDE_TONE[option.id];
               return (
                 <button
                   key={option.id}
@@ -503,23 +518,21 @@ function BaccaratTable() {
                   }}
                   aria-pressed={active}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 border px-2 py-3 transition-colors",
+                    "flex flex-col items-center gap-1.5 border-2 px-2 py-3 transition-colors",
                     over === option.id
-                      ? "border-[rgba(201,167,94,0.95)] bg-[rgba(201,167,94,0.18)]"
+                      ? cn(tone.border, tone.wash)
                       : active
-                        ? "border-[rgba(201,167,94,0.8)] bg-[rgba(201,167,94,0.1)]"
-                        : "border-[rgba(236,229,216,0.16)] hover:border-[rgba(236,229,216,0.3)]",
+                        ? cn(tone.border, tone.wash)
+                        : "border-line-2 hover:border-fg-3",
                     dragging && over !== option.id && "border-dashed",
                     disabled && "opacity-60",
                   )}
                 >
-                  <span className="font-mono text-[10px] tracking-[0.16em] text-[rgba(236,229,216,0.9)] uppercase">
+                  <span className={cn("font-mono text-[11px] tracking-[0.14em] uppercase", active ? tone.text : "text-fg")}>
                     {option.label}
                   </span>
-                  <span className="tabular text-[11px] text-[rgba(236,229,216,0.55)]">
-                    {option.payout}
-                  </span>
-                  <span className="font-mono text-[9px] tracking-[0.1em] text-[rgba(236,229,216,0.4)] uppercase">
+                  <span className="tabular text-[11px] text-fg-2">{option.payout}</span>
+                  <span className="label text-fg-3">
                     Edge {formatPercent(BACCARAT_EDGE[option.id], 2)}
                   </span>
                 </button>
@@ -529,28 +542,23 @@ function BaccaratTable() {
 
           {log.length > 0 ? (
             <div className="flex w-full max-w-2xl flex-col items-center gap-2">
-              <span className="font-mono text-[8.5px] tracking-[0.2em] text-[rgba(236,229,216,0.3)] uppercase">
-                Last outcomes, oldest on the right
-              </span>
+              <span className="label text-fg-3">Last outcomes, oldest on the right</span>
               <div className="flex flex-wrap justify-center gap-1">
                 {log.slice(0, 20).map((entry) => (
                   <span
                     key={entry.number}
                     title={entry.outcome}
                     className={cn(
-                      "grid h-5 w-5 place-items-center border font-mono text-[9px] uppercase",
-                      entry.outcome === "banker"
-                        ? "border-[rgba(205,128,121,0.6)] text-[rgba(205,128,121,0.9)]"
-                        : entry.outcome === "player"
-                          ? "border-[rgba(127,177,149,0.6)] text-[rgba(127,177,149,0.9)]"
-                          : "border-[rgba(201,167,94,0.7)] text-[rgba(201,167,94,0.9)]",
+                      "grid h-5 w-5 place-items-center border-2 font-mono text-[9px] uppercase",
+                      SIDE_TONE[entry.outcome].border,
+                      SIDE_TONE[entry.outcome].text,
                     )}
                   >
                     {entry.outcome[0]}
                   </span>
                 ))}
               </div>
-              <span className="font-mono text-[8.5px] tracking-[0.14em] text-[rgba(236,229,216,0.25)] uppercase">
+              <span className="label text-fg-3">
                 Past results do not affect the next hand
               </span>
             </div>

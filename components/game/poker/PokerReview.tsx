@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PokerHandSummary } from "@/lib/store/poker-session";
 import { ASSESSMENT_COPY, primaryPokerDecision } from "@/lib/games/poker/coach";
@@ -47,6 +47,15 @@ export function PokerReview({
 }) {
   const [expanded, setExpanded] = useState(false);
   const primary = useMemo(() => primaryPokerDecision(summary.decisions), [summary.decisions]);
+  const headingRef = useRef<HTMLParagraphElement | null>(null);
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    headingRef.current?.focus();
+    return () => {
+      previouslyFocused?.focus?.();
+    };
+  }, []);
 
   const byStreet = useMemo(() => {
     return STREET_ORDER.map((street) => ({
@@ -60,7 +69,11 @@ export function PokerReview({
       <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div>
           <span className="label">Hand {summary.number} review</span>
-          <p className="display mt-1.5 text-[20px] leading-none">
+          <p
+            ref={headingRef}
+            tabIndex={-1}
+            className="display mt-1.5 text-[20px] leading-none focus:outline-2 focus:outline-accent-2 focus:outline-offset-4"
+          >
             {primary ? primary.headline : "Nothing to review."}
           </p>
         </div>
@@ -102,7 +115,7 @@ export function PokerReview({
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span
                 className={cn(
-                  "border px-2 py-[3px] font-mono text-[9.5px] tracking-[0.14em] uppercase",
+                  "border px-2 py-[3px] font-mono text-[10.5px] tracking-[0.1em] uppercase",
                   TONE[primary.assessment],
                 )}
               >
@@ -159,7 +172,7 @@ export function PokerReview({
                             </span>
                             <span
                               className={cn(
-                                "shrink-0 border px-1.5 py-[2px] font-mono text-[9px] tracking-[0.12em] uppercase",
+                                "shrink-0 border px-1.5 py-[2px] font-mono text-[10px] tracking-[0.1em] uppercase",
                                 TONE[decision.assessment],
                               )}
                             >

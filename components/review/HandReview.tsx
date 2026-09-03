@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { DecisionRecord } from "@/lib/games/blackjack/types";
 import { actionLabel } from "@/lib/strategy/blackjack-strategy";
@@ -68,6 +68,21 @@ export function HandReview({
 }) {
   const [expanded, setExpanded] = useState(false);
   const primary = useMemo(() => primaryDecision(summary.decisions), [summary.decisions]);
+  const headingRef = useRef<HTMLParagraphElement | null>(null);
+
+  /**
+   * The review opens without trapping focus — the result behind it stays
+   * visible and reachable — but it should still receive focus itself, and
+   * hand it back to whatever opened it once it closes, rather than leaving
+   * the keyboard user's position undefined.
+   */
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    headingRef.current?.focus();
+    return () => {
+      previouslyFocused?.focus?.();
+    };
+  }, []);
 
   const tally = useMemo(() => {
     const counts = { optimal: 0, acceptable: 0, mistake: 0, "major-mistake": 0 };
@@ -90,7 +105,13 @@ export function HandReview({
       <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4">
         <div>
           <span className="label">Hand {summary.number} review</span>
-          <p className="display mt-1.5 text-[20px] leading-none">{headline}</p>
+          <p
+            ref={headingRef}
+            tabIndex={-1}
+            className="display mt-1.5 text-[20px] leading-none focus:outline-2 focus:outline-accent-2 focus:outline-offset-4"
+          >
+            {headline}
+          </p>
         </div>
         <span
           className={cn(
@@ -167,7 +188,7 @@ export function HandReview({
                           {decision.rowLabel} against {decision.dealerKey}, {" "}
                           {actionLabel(decision.taken).toLowerCase()}
                         </p>
-                        <p className="mt-1 font-mono text-[9.5px] tracking-[0.12em] text-fg-3 uppercase">
+                        <p className="mt-1 font-mono text-[10px] tracking-[0.1em] text-fg-3 uppercase">
                           {CATEGORY_LABEL[decision.category]} / {QUALITY_LABEL[decision.quality]}
                         </p>
                       </div>

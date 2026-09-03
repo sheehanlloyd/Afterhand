@@ -36,7 +36,7 @@ export function TotalPlate({
           ? "border-negative/60 bg-negative/12 text-negative"
           : tone === "win"
             ? "border-positive/60 bg-positive/12 text-positive"
-            : "border-[rgba(236,229,216,0.22)] bg-[rgba(6,10,9,0.4)] text-[rgba(236,229,216,0.92)]",
+            : "border-line-2 bg-surface-3/60 text-fg",
         className,
       )}
     >
@@ -189,8 +189,8 @@ export function PlayerHand({
       {label ? (
         <span
           className={cn(
-            "font-mono text-[9px] tracking-[0.2em] uppercase transition-colors",
-            active ? "text-accent-2" : "text-[rgba(236,229,216,0.38)]",
+            "label transition-colors",
+            active ? "text-accent-2" : "text-fg-3",
           )}
         >
           {label}
@@ -198,8 +198,10 @@ export function PlayerHand({
       ) : null}
 
       <div className="relative">
-        {/* The seat itself brightens when it is your turn: a pool of light on
-            the felt under the hand rather than a border drawn around it. */}
+        {/* The seat itself brightens when it is your turn: a steady pool of
+            light on the felt under the hand rather than a pulsing border. It
+            lights once, on arrival, and then holds — an active hand should be
+            unmistakable at a glance, not blinking for attention. */}
         <AnimatePresence>
           {active ? (
             <motion.span
@@ -207,14 +209,12 @@ export function PlayerHand({
               aria-hidden="true"
               className="pointer-events-none absolute -inset-x-6 -inset-y-8 -z-10"
               initial={{ opacity: 0 }}
-              animate={{ opacity: [0.55, 0.85, 0.55] }}
+              animate={{ opacity: 0.7 }}
               exit={{ opacity: 0 }}
-              transition={{
-                opacity: { duration: 3.4, repeat: Infinity, ease: EASE.drift },
-              }}
+              transition={{ duration: DURATION.reveal, ease: EASE.arrive }}
               style={{
                 background:
-                  "radial-gradient(closest-side, rgba(201,167,94,0.16), rgba(201,167,94,0) 78%)",
+                  "radial-gradient(closest-side, rgba(201,167,94,0.18), rgba(201,167,94,0) 78%)",
               }}
             />
           ) : null}
@@ -269,7 +269,7 @@ export function PlayerHand({
         <div ref={betAnchor} className="[--chip-w:2rem]">
           <BetStack amount={bet} denominations={denominations} />
         </div>
-        <span className="tabular text-[11px] text-[rgba(236,229,216,0.6)]">
+        <span className="tabular text-[11px] text-fg-2">
           {formatMoney(bet)}
           {doubled ? (
             <span className="ml-1.5 font-mono text-[8.5px] tracking-[0.12em] uppercase opacity-70">
@@ -295,7 +295,7 @@ export function PlayerHand({
                 : !isBlackjack && outcome.tone === "lose"
                   ? "border-negative/55 text-negative"
                   : !isBlackjack
-                    ? "border-[rgba(236,229,216,0.3)] text-[rgba(236,229,216,0.75)]"
+                    ? "border-line-2 text-fg-2"
                     : "",
             )}
           >
@@ -314,7 +314,7 @@ export function PlayerHand({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: DURATION.turn, ease: EASE.arrive }}
-            className="border border-[rgba(236,229,216,0.24)] px-2 py-[3px] font-mono text-[9.5px] tracking-[0.18em] text-[rgba(236,229,216,0.6)] uppercase"
+            className="border border-line-2 px-2 py-[3px] font-mono text-[10px] tracking-[0.14em] text-fg-2 uppercase"
           >
             Stand
           </motion.span>

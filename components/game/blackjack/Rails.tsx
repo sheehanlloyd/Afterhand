@@ -54,7 +54,7 @@ export function BetRailLayout({
         {chips}
       </div>
       {footnote ? (
-        <p className="w-full text-center font-mono text-[9.5px] tracking-[0.14em] text-fg-3 uppercase sm:order-4">
+        <p className="w-full text-center font-mono text-[10px] tracking-[0.12em] text-fg-3 uppercase sm:order-4">
           {footnote}
         </p>
       ) : null}
@@ -296,7 +296,7 @@ export function InsuranceRail({
 
 function Key({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="ml-1 hidden border border-current/35 px-1 py-px font-mono text-[9px] leading-none tracking-normal opacity-60 sm:inline-block">
+    <kbd className="ml-1 hidden border border-current/35 px-1 py-px font-mono text-[10px] leading-none tracking-normal opacity-70 sm:inline-block">
       {children}
     </kbd>
   );

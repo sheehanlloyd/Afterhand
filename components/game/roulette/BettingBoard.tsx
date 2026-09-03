@@ -99,7 +99,7 @@ export function BettingBoard({
         initial={{ scale: 0.4, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ ...SPRING.wobble, delay: DURATION.chip * 0.82 }}
-        className="tabular pointer-events-auto absolute -top-1 -right-1 z-20 grid h-5 min-w-5 cursor-pointer place-items-center rounded-full border border-[rgba(201,167,94,0.85)] bg-[#1a1512] px-1 text-[9px] text-[#e8dcbf]"
+        className="tabular pointer-events-auto absolute -top-1.5 -right-1.5 z-20 grid h-5 min-w-5 cursor-pointer place-items-center rounded-full border border-accent-2/85 bg-[#1a1512] px-1 text-[10px] font-medium text-[#e8dcbf]"
         title={`${formatMoney(amount)}. Click to remove.`}
       >
         {amount}
@@ -138,8 +138,8 @@ export function BettingBoard({
                   aria-label={`Straight up on ${pocket}`}
                   className={cn(
                     "relative flex flex-1 items-center justify-center border font-mono text-[12px] transition-colors",
-                    "border-[rgba(236,229,216,0.2)] bg-[rgba(20,72,58,0.75)] text-[rgba(236,229,216,0.9)]",
-                    !disabled && "hover:border-[rgba(201,167,94,0.8)]",
+                    "border-line-2 bg-felt-600/75 text-fg",
+                    !disabled && "hover:border-accent-2/80",
                     winning === pocket && "border-[rgba(201,167,94,1)] bg-[rgba(201,167,94,0.28)]",
                   )}
                   style={{ minHeight: zeroPockets.length === 1 ? "6.75rem" : "3.3rem" }}
@@ -168,10 +168,10 @@ export function BettingBoard({
                       className={cn(
                         "relative flex h-9 items-center justify-center border font-mono text-[12px] transition-colors",
                         isRed(value)
-                          ? "bg-[rgba(124,47,44,0.85)]"
-                          : "bg-[rgba(25,29,28,0.85)]",
-                        "border-[rgba(236,229,216,0.18)] text-[rgba(236,229,216,0.92)]",
-                        !disabled && "hover:border-[rgba(201,167,94,0.8)]",
+                          ? "bg-suit-red/85"
+                          : "bg-suit-black/85",
+                        "border-line-2 text-fg",
+                        !disabled && "hover:border-accent-2/80",
                         winning === value && "border-[rgba(201,167,94,1)] ring-1 ring-[rgba(201,167,94,0.8)]",
                       )}
                     >
@@ -303,8 +303,8 @@ export function BettingBoard({
                   onClick={(event) => place("column", numbers, event.currentTarget)}
                   aria-label={`Column ${index + 1}, pays 2 to 1`}
                   className={cn(
-                    "relative flex h-9 items-center justify-center border border-[rgba(236,229,216,0.18)] bg-[rgba(20,72,58,0.5)] font-mono text-[9px] tracking-[0.1em] text-[rgba(236,229,216,0.8)] uppercase transition-colors",
-                    !disabled && "hover:border-[rgba(201,167,94,0.8)]",
+                    "relative flex h-9 items-center justify-center border border-line-2 bg-felt-600/50 font-mono text-[10px] tracking-[0.08em] text-fg uppercase transition-colors",
+                    !disabled && "hover:border-accent-2/80",
                   )}
                 >
                   2 to 1
@@ -329,8 +329,8 @@ export function BettingBoard({
                   disabled={disabled}
                   onClick={(event) => place("dozen", numbers, event.currentTarget)}
                   className={cn(
-                    "relative flex h-8 items-center justify-center border border-[rgba(236,229,216,0.18)] bg-[rgba(20,72,58,0.5)] font-mono text-[9.5px] tracking-[0.12em] text-[rgba(236,229,216,0.82)] uppercase transition-colors",
-                    !disabled && "hover:border-[rgba(201,167,94,0.8)]",
+                    "relative flex h-8 items-center justify-center border border-line-2 bg-felt-600/50 font-mono text-[11px] tracking-[0.08em] text-fg uppercase transition-colors",
+                    !disabled && "hover:border-accent-2/80",
                   )}
                 >
                   {label}
@@ -365,13 +365,13 @@ export function BettingBoard({
                   disabled={disabled}
                   onClick={(event) => place(type, numbers, event.currentTarget)}
                   className={cn(
-                    "relative flex h-8 items-center justify-center border border-[rgba(236,229,216,0.18)] font-mono text-[9.5px] tracking-[0.1em] uppercase transition-colors",
+                    "relative flex h-8 items-center justify-center border border-line-2 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors",
                     type === "red"
-                      ? "bg-[rgba(124,47,44,0.75)] text-[rgba(236,229,216,0.9)]"
+                      ? "bg-suit-red/75 text-fg"
                       : type === "black"
-                        ? "bg-[rgba(25,29,28,0.85)] text-[rgba(236,229,216,0.9)]"
-                        : "bg-[rgba(20,72,58,0.5)] text-[rgba(236,229,216,0.82)]",
-                    !disabled && "hover:border-[rgba(201,167,94,0.8)]",
+                        ? "bg-suit-black/85 text-fg"
+                        : "bg-felt-600/50 text-fg",
+                    !disabled && "hover:border-accent-2/80",
                   )}
                 >
                   {label}
@@ -389,7 +389,7 @@ export function BettingBoard({
           minimum, so on a phone the middle of the sentence sat off the right
           edge and the instruction only read correctly if you scrolled the board
           sideways to find it. */}
-      <p className="mt-3 text-center font-mono text-[8.5px] tracking-[0.14em] text-[rgba(236,229,216,0.3)] uppercase">
+      <p className="mt-3 text-center font-mono label text-fg-3">
         Click a line marker for splits, streets, corners, and six lines. Click a chip to remove it.
       </p>
     </div>

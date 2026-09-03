@@ -31,6 +31,10 @@ export const DURATION = {
   reveal: 0.5,
   /** Reserved for a genuinely large win. */
   celebrate: 1.6,
+  /** One screen handing off to the next (setup → table → summary). */
+  screen: 0.3,
+  /** One full revolution of the roulette wheel while it is settling. */
+  wheelSpin: 0.9,
 } as const;
 
 /**
