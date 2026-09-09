@@ -31,7 +31,7 @@ export function LearningProfile() {
   const storable = useClientValue("storage.available", storageAvailable) ?? true;
 
   if (!blackjack || !poker || !baccarat || !roulette) {
-    return <div className="mt-10 h-40 border border-dashed border-line" aria-hidden="true" />;
+    return <div className="mt-10 h-40 bg-surface-2/80" aria-hidden="true" />;
   }
 
   const accuracy = overallAccuracy(blackjack);

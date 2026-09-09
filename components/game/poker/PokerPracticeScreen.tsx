@@ -27,6 +27,7 @@ import { Term } from "@/components/ui/Term";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils/cn";
+import { DURATION, TRANSITION } from "@/lib/motion/tokens";
 
 interface Answer {
   scenario: PokerScenario;
@@ -124,7 +125,7 @@ export function PokerPracticeScreen() {
             className="h-full bg-accent"
             initial={{ width: "0%" }}
             animate={{ width: `${progress * 100}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: DURATION.screen, ease: "easeOut" }}
           />
         </div>
 
@@ -205,10 +206,10 @@ export function PokerPracticeScreen() {
         <AnimatePresence>
           {pending ? (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
+              transition={TRANSITION.menu}
               className="mt-6 border border-line bg-surface-2 p-5"
             >
               <div className="flex items-baseline justify-between gap-4">

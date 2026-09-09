@@ -39,6 +39,7 @@ import { useDealer } from "@/lib/store/dealer";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils/cn";
+import { TRANSITION } from "@/lib/motion/tokens";
 
 const MIN_BET = 5;
 const MAX_TOTAL = 5000;
@@ -529,10 +530,10 @@ export function RouletteScreen() {
         <AnimatePresence>
           {settlements && mode === "learn" && result !== null ? (
             <motion.aside
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={TRANSITION.screen}
               aria-label="Spin explanation"
               className="absolute right-0 bottom-0 left-0 z-20 max-h-[62%] overflow-y-auto border-t border-line bg-surface sm:right-5 sm:bottom-5 sm:left-auto sm:max-h-[calc(100%-2.5rem)] sm:w-[23rem] sm:border sm:border-line"
             >

@@ -253,7 +253,7 @@ export const useBlackjackSession = create<BlackjackSessionStore>((set, get) => {
       playSound("flip");
     }, RHYTHM.beforeReveal);
 
-    const drawn = runReveal(game, RHYTHM.beforeReveal + DURATION.flip * 1000 + 140);
+    const drawn = runReveal(game, RHYTHM.beforeReveal + DURATION.flip * 1000 + 80);
 
     schedule(() => {
       const state = get();

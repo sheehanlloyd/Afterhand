@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Logo } from "./Logo";
+import { LinkButton } from "@/components/ui/LinkButton";
 import { cn } from "@/lib/utils/cn";
+import { DURATION, EASE } from "@/lib/motion/tokens";
 
 const LINKS = [
   { href: "/games", label: "Play" },
   { href: "/learn", label: "Learn" },
-  { href: "/games/blackjack/practice", label: "Practice" },
   { href: "/rules", label: "Rules" },
 ];
 
@@ -19,8 +20,8 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-surface/92 backdrop-blur-md">
-      <div className="mx-auto flex h-[58px] w-full max-w-[var(--shell-max)] items-center gap-8 px-5 sm:px-8">
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur-xl">
+      <div className="mx-auto flex h-[56px] w-full max-w-[var(--shell-max)] items-center gap-8 px-5 sm:px-8">
         <Logo />
 
         <nav aria-label="Main" className="hidden items-center gap-7 md:flex">
@@ -41,9 +42,11 @@ export function SiteHeader() {
               >
                 {link.label}
                 {active ? (
-                  <span
+                  <motion.span
+                    layoutId="site-nav-underline"
                     aria-hidden="true"
                     className="absolute inset-x-0 -bottom-px h-[2px] bg-accent-2"
+                    transition={{ duration: DURATION.menu, ease: EASE.arriveShort }}
                   />
                 ) : null}
               </Link>
@@ -51,7 +54,7 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-5">
+        <div className="ml-auto flex items-center gap-4">
           <Link
             href="/settings"
             prefetch={false}
@@ -59,12 +62,11 @@ export function SiteHeader() {
           >
             Settings
           </Link>
-          <Link
-            href="/games/blackjack"
-            className="hidden h-9 items-center rounded-sm bg-[var(--btn-bg)] px-4 font-mono text-[11px] tracking-[0.14em] text-[var(--btn-fg)] uppercase transition-[filter] hover:brightness-110 md:inline-flex"
-          >
-            Deal me in
-          </Link>
+          <span className="hidden md:inline-flex">
+            <LinkButton href="/games/blackjack" variant="primary" size="sm" plate>
+              Deal me in
+            </LinkButton>
+          </span>
           <button
             type="button"
             className="font-mono text-[11px] tracking-[0.14em] text-fg-2 uppercase md:hidden"
@@ -84,7 +86,7 @@ export function SiteHeader() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.menu, ease: EASE.arriveShort }}
             className="overflow-hidden border-t border-line md:hidden"
           >
             <nav aria-label="Mobile" className="flex flex-col divide-y divide-[var(--line)] px-5">
@@ -99,13 +101,17 @@ export function SiteHeader() {
                   {link.label}
                 </Link>
               ))}
-              <Link
+              <LinkButton
                 href="/games/blackjack"
+                variant="primary"
+                size="lg"
+                plate
+                block
+                className="my-4"
                 onClick={() => setOpen(false)}
-                className="my-4 inline-flex h-11 items-center justify-center rounded-sm bg-[var(--btn-bg)] font-mono text-[11px] tracking-[0.14em] text-[var(--btn-fg)] uppercase"
               >
                 Deal me in
-              </Link>
+              </LinkButton>
             </nav>
           </motion.div>
         ) : null}

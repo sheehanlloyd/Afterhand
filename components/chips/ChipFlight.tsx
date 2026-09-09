@@ -108,7 +108,7 @@ export function ChipFlightLayer({ children }: { children: ReactNode }) {
           dx: endX - startX + wobbleOf(key, "ex") * 7,
           dy: endY - startY - index * 3.5 + wobbleOf(key, "ey") * 4,
           size: "2.15rem",
-          delay: index * 0.045,
+          delay: index * 0.028,
           spin: wobbleOf(key, "spin") * 130,
         };
       });
@@ -167,9 +167,9 @@ export function ChipFlightLayer({ children }: { children: ReactNode }) {
                 x: chip.dx,
                 /* Chips are pushed across a felt, so they rise a little in the
                    middle of the journey rather than travelling flat. */
-                y: [0, chip.dy * 0.45 - 16, chip.dy],
+                y: [0, chip.dy * 0.42 - 10, chip.dy],
                 rotate: chip.spin,
-                scale: [0.94, 1.06, 1],
+                scale: [0.96, 1.03, 1],
                 opacity: 1,
               }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.12 } }}

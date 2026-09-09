@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { GLOSSARY } from "@/lib/content/glossary";
 import { cn } from "@/lib/utils/cn";
+import { TRANSITION } from "@/lib/motion/tokens";
 
 /**
  * Inline glossary term. Opens on click and on keyboard focus activation, never
@@ -69,7 +70,7 @@ export function Term({
             initial={{ opacity: 0, y: above ? 4 : -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: above ? 4 : -4 }}
-            transition={{ duration: 0.16 }}
+            transition={TRANSITION.fade}
             className={cn(
               "card-surface absolute left-0 z-40 block w-[min(20rem,calc(100vw-2.5rem))] rounded-sm p-4 text-left shadow-[0_18px_40px_-24px_rgba(0,0,0,0.6)]",
               above ? "bottom-full mb-2" : "top-full mt-2",

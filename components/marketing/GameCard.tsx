@@ -1,70 +1,59 @@
 import Link from "next/link";
 import { GameEntry } from "@/lib/content/games";
 import { GameGlyph } from "./GameGlyph";
-import { cn } from "@/lib/utils/cn";
+import { LinkButton } from "@/components/ui/LinkButton";
 
 /**
- * An index card from a printed manual: hairline box, number in the corner,
- * name set in the display face, and the routes listed as plain entries.
+ * An invitation to sit: a strip of felt, the table's name, one primary seat,
+ * and the quieter routes listed as text rather than as a second identical menu.
  */
 export function GameCard({ game, index }: { game: GameEntry; index: number }) {
-  const links = [
-    { href: game.play, label: "Play" },
+  const secondary = [
     { href: game.learn, label: "Learn" },
     ...(game.practice ? [{ href: game.practice, label: "Practice" }] : []),
     { href: game.rules, label: "Rules" },
   ];
 
   return (
-    <article className="group relative flex flex-col bg-surface transition-colors duration-200 hover:bg-surface-2">
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-[2px] scale-x-0 bg-accent-2 transition-transform duration-300 ease-out group-hover:scale-x-100"
-        style={{ transformOrigin: "left" }}
-      />
-
-      <div className="flex items-baseline justify-between gap-4 px-5 pt-5">
-        <span className="label">{String(index + 1).padStart(2, "0")}</span>
-        <span className="font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase">
-          {game.difficulty}
-        </span>
-      </div>
-
-      <div className="flex flex-1 flex-col px-5 pt-4 pb-6">
-        <GameGlyph
-          game={game.id}
-          className="h-9 w-10 text-accent-2/75 transition-colors group-hover:text-accent-2"
+    <article className="group relative flex flex-col bg-surface">
+      <div className="felt relative overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-2.5 border border-[rgba(201,167,94,0.16)]"
         />
-        <h3 className="display mt-4 text-[27px] leading-none">{game.name}</h3>
-        <p className="mt-3.5 flex-1 text-[13.5px] leading-relaxed text-fg-2">{game.tagline}</p>
+        <div className="relative z-10 flex items-center justify-between px-5 pt-4">
+          <span className="font-mono text-[10px] tracking-[0.18em] text-[rgba(201,167,94,0.72)] uppercase">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span className="font-mono text-[10px] tracking-[0.14em] text-[rgba(236,229,216,0.42)] uppercase">
+            {game.difficulty}
+          </span>
+        </div>
+        <div className="relative z-10 flex items-end px-5 pt-8 pb-5">
+          <GameGlyph game={game.id} className="h-11 w-12 text-[rgba(201,167,94,0.88)]" />
+        </div>
       </div>
 
-      <ul className="flex flex-col divide-y divide-[var(--line)] border-t border-line">
-        {links.map((link, position) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              /**
-               * Only the primary route is worth prefetching. Four cards times
-               * four links is sixteen speculative payloads for a page where
-               * most visitors take one of them, and every one of those is a
-               * billed edge request. The rest are static and load fast anyway.
-               */
-              prefetch={position === 0 ? undefined : false}
-              className={cn(
-                "flex items-center justify-between px-5 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors",
-                position === 0 ? "text-fg" : "text-fg-3",
-                "hover:bg-fg/[0.05] hover:text-fg",
-              )}
-            >
-              {link.label}
-              <span aria-hidden="true" className="text-[13px] leading-none">
-                &rarr;
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-1 flex-col px-5 pt-5 pb-6">
+        <h3 className="display text-[26px] leading-none">{game.name}</h3>
+        <p className="mt-3 flex-1 text-[13.5px] leading-relaxed text-fg-2">{game.tagline}</p>
+        <LinkButton href={game.play} variant="primary" size="md" plate className="mt-5 w-full">
+          Play
+        </LinkButton>
+        <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-1.5">
+          {secondary.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                prefetch={false}
+                className="font-mono text-[10.5px] tracking-[0.14em] text-fg-3 uppercase transition-colors hover:text-fg"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
     </article>
   );
 }

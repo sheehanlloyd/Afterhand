@@ -43,8 +43,8 @@ export function Toggle({
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 transition-[left] duration-200",
-            checked ? "left-[calc(100%-1.125rem)] bg-accent-2" : "left-[3px] bg-fg-3",
+            "absolute top-1/2 left-[3px] h-3.5 w-3.5 -translate-y-1/2 transition-transform duration-200 ease-[cubic-bezier(0.2,0.9,0.28,1)]",
+            checked ? "translate-x-[18px] bg-accent-2" : "bg-fg-3",
           )}
         />
       </button>

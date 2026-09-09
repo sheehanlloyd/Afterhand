@@ -28,7 +28,7 @@ export function Modal({
     <Overlay open={open} onClose={onClose} labelledBy={titleId} align="center">
       <div
         className={cn(
-          "card-surface w-[calc(100vw-2rem)] rounded-sm shadow-[0_30px_70px_-40px_rgba(0,0,0,0.7)]",
+          "card-surface w-[calc(100vw-2rem)] overflow-hidden rounded-sm shadow-[0_30px_70px_-40px_rgba(0,0,0,0.7)]",
           widths[size],
         )}
       >

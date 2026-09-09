@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { GameCard } from "@/components/marketing/GameCard";
-import { SectionHead } from "@/components/ui/Panel";
 import { GAMES } from "@/lib/content/games";
 
 export const metadata: Metadata = {
@@ -30,21 +29,6 @@ export default function GamesPage() {
           <GameCard key={game.id} game={game} index={index} />
         ))}
       </div>
-
-      <section className="mt-20">
-        <SectionHead index="A" title="What each table teaches" />
-        <dl className="mt-8 divide-y divide-[var(--line)] border-t border-line">
-          {GAMES.map((game) => (
-            <div
-              key={game.id}
-              className="grid gap-2 py-6 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:gap-8"
-            >
-              <dt className="display text-[21px] leading-none">{game.name}</dt>
-              <dd className="text-[14px] leading-relaxed text-fg-2">{game.description}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
     </SiteShell>
   );
 }

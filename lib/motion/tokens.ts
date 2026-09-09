@@ -14,56 +14,56 @@
 /** Seconds. Named for the interaction rather than the number. */
 export const DURATION = {
   /** Button and chip presses. Short enough to feel like contact, not travel. */
-  press: 0.1,
-  tooltip: 0.16,
-  menu: 0.22,
+  press: 0.08,
+  tooltip: 0.12,
+  menu: 0.16,
   /** A card crossing the felt from the shoe to a seat. */
-  deal: 0.34,
-  /** A short deal: a hit card, or a community card sliding one seat over. */
-  dealShort: 0.26,
+  deal: 0.26,
+  /** A hit or a community card sliding one seat over. */
+  dealShort: 0.18,
   /** The three dimensional turn of a card. */
-  flip: 0.34,
+  flip: 0.22,
   /** A chip or a small stack of chips crossing the table. */
-  chip: 0.44,
+  chip: 0.28,
   /** Handing the turn from one seat to the next. */
-  turn: 0.28,
+  turn: 0.2,
   /** An outcome resolving: totals, plates, the dealer's line. */
-  reveal: 0.5,
+  reveal: 0.28,
   /** Reserved for a genuinely large win. */
-  celebrate: 1.6,
+  celebrate: 0.95,
   /** One screen handing off to the next (setup → table → summary). */
-  screen: 0.3,
+  screen: 0.2,
   /** One full revolution of the roulette wheel while it is settling. */
-  wheelSpin: 0.9,
+  wheelSpin: 0.7,
 } as const;
 
 /**
  * Curves.
  *
- * `arrive` is the workhorse and the one that makes cards feel heavy: a hard
- * push at the start, a long glide, then a very soft stop. `settle` is the small
- * overshoot correction that runs after something has landed.
+ * `arrive` is the workhorse: a firm push, a short glide, a soft stop. Earlier
+ * versions lingered in the glide and read as lag. These are snappier, so a
+ * card that has arrived feels arrived.
  */
 export const EASE = {
-  /** Fast acceleration, glide, soft deceleration. Use for anything arriving. */
-  arrive: [0.16, 1, 0.3, 1] as const,
-  /** Slightly firmer arrival for short distances, where a long glide reads as lag. */
-  arriveShort: [0.22, 1, 0.36, 1] as const,
+  /** Fast acceleration, brief glide, soft deceleration. Use for anything arriving. */
+  arrive: [0.2, 0.9, 0.28, 1] as const,
+  /** Firmer still, for short distances where a glide would read as delay. */
+  arriveShort: [0.18, 0.82, 0.3, 1] as const,
   /** Leaving the table: accelerate away, no glide, because nothing is waiting. */
-  leave: [0.5, 0, 0.85, 0.3] as const,
+  leave: [0.42, 0, 0.92, 0.22] as const,
   /** Symmetric, for things that move without a destination, like a breath. */
-  drift: [0.42, 0, 0.58, 1] as const,
+  drift: [0.4, 0.05, 0.6, 0.95] as const,
 } as const;
 
 export const SPRING = {
   /** The tiny correction as a card meets the felt. */
-  settle: { type: "spring" as const, stiffness: 640, damping: 32, mass: 0.7 },
+  settle: { type: "spring" as const, stiffness: 480, damping: 26, mass: 0.55 },
   /** Chips landing on a stack, which wobble a little more than a card. */
-  wobble: { type: "spring" as const, stiffness: 380, damping: 17, mass: 0.9 },
+  wobble: { type: "spring" as const, stiffness: 320, damping: 16, mass: 0.7 },
   /** Interface elements: seat highlights, plates, rails. */
-  ui: { type: "spring" as const, stiffness: 420, damping: 30 },
-  /** The camera. Deliberately slow and heavily damped so it is never noticed. */
-  camera: { type: "spring" as const, stiffness: 70, damping: 24, mass: 1.1 },
+  ui: { type: "spring" as const, stiffness: 520, damping: 34 },
+  /** The camera. Still slow enough to read as attention, not as a pan. */
+  camera: { type: "spring" as const, stiffness: 150, damping: 22, mass: 0.85 },
 } as const;
 
 /**
@@ -74,18 +74,25 @@ export const SPRING = {
  */
 export const RHYTHM = {
   /** Between one card leaving and the next, going round the table. */
-  betweenCards: 210,
+  betweenCards: 135,
   /** The extra beat before the dealer takes their own card. */
-  beforeDealer: 90,
+  beforeDealer: 50,
   /** Between the three cards of a flop fanning outward. */
-  betweenCommunity: 80,
+  betweenCommunity: 50,
   /** Held before a card that has arrived face down is turned over. */
-  beforeReveal: 260,
+  beforeReveal: 140,
   /** Between hands being swept into the discard tray at the end of a round. */
-  betweenCollect: 70,
+  betweenCollect: 45,
   /** How long a card takes to physically settle once it has arrived. */
-  landing: 120,
+  landing: 80,
 } as const;
 
 /** How far a card's flight is allowed to smear, as a fraction of its width. */
-export const SMEAR_MAX = 0.16;
+export const SMEAR_MAX = 0.12;
+
+/** Shared transition objects so chrome does not invent its own timings. */
+export const TRANSITION = {
+  fade: { duration: DURATION.tooltip, ease: EASE.arriveShort },
+  menu: { duration: DURATION.menu, ease: EASE.arriveShort },
+  screen: { duration: DURATION.screen, ease: EASE.arrive },
+} as const;

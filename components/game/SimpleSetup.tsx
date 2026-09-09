@@ -166,7 +166,7 @@ export function SimpleSetup({
 
 export function Placard({ title, lines }: { title: string; lines: Array<[string, string]> }) {
   return (
-    <div className="felt border border-brass/30 p-6">
+    <div className="felt relative overflow-hidden border border-brass/30 p-6">
       {/* This placard sits on the felt's own dark ground regardless of the
           page around it, so its type uses the felt's fixed ivory/brass
           palette rather than the paper/room tokens that swap with the page. */}

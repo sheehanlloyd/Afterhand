@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { QUALITY_LABEL, QualityMark } from "./QualityMark";
 import { CATEGORY_LABEL } from "@/lib/storage/learning";
 import { cn } from "@/lib/utils/cn";
+import { TRANSITION } from "@/lib/motion/tokens";
 
 const SEVERITY = {
   "major-mistake": 0,
@@ -174,7 +175,7 @@ export function HandReview({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+              transition={TRANSITION.menu}
               className="overflow-hidden"
             >
               <div className="mt-6 border-t border-line pt-5">

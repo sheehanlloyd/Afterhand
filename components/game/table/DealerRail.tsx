@@ -44,7 +44,7 @@ const SHUFFLES: Record<
   }
 > = {
   riffle: {
-    duration: 0.9,
+    duration: 0.72,
     times: [0, 0.24, 0.52, 0.78, 1],
     left: { x: [0, -13, -11, -1, 0], rotate: [0, -5, -3, 0.5, 0], y: [0, -2, -1, 0, 0] },
     right: { x: [0, 13, 11, 1, 0], rotate: [0, 5, 3, -0.5, 0], y: [0, -2, -1, 0, 0] },
@@ -55,7 +55,7 @@ const SHUFFLES: Record<
     ],
   },
   "table-riffle": {
-    duration: 1,
+    duration: 0.8,
     times: [0, 0.22, 0.46, 0.74, 1],
     left: { x: [0, -15, -14, -2, 0], rotate: [0, -2, -1.5, 0, 0], scaleY: [1, 1, 0.99, 1, 1] },
     right: { x: [0, 15, 14, 2, 0], rotate: [0, 2, 1.5, 0, 0], scaleY: [1, 1, 0.99, 1, 1] },
@@ -66,7 +66,7 @@ const SHUFFLES: Record<
     ],
   },
   strip: {
-    duration: 0.82,
+    duration: 0.66,
     times: [0, 0.2, 0.38, 0.56, 0.74, 1],
     left: { y: [0, 0, 0, 0, 0, 0] },
     right: { y: [0, -11, -2, -10, -2, 0], x: [0, 5, 1, 4, 1, 0], rotate: [0, 3, 0, 2.5, 0, 0] },
@@ -78,7 +78,7 @@ const SHUFFLES: Record<
     ],
   },
   "running-cuts": {
-    duration: 0.88,
+    duration: 0.7,
     times: [0, 0.18, 0.36, 0.54, 0.72, 1],
     left: { x: [0, 2, 0, 2, 0, 0] },
     right: { x: [0, 14, 0, 12, 0, 0], y: [0, -6, 0, -5, 0, 0], rotate: [0, 6, 0, 5, 0, 0] },
@@ -90,7 +90,7 @@ const SHUFFLES: Record<
     ],
   },
   wash: {
-    duration: 1.2,
+    duration: 0.95,
     times: [0, 0.3, 0.55, 0.8, 1],
     left: { x: [0, -18, -6, -12, 0], y: [0, 5, -3, 2, 0], rotate: [0, -9, 4, -5, 0] },
     right: { x: [0, 17, 7, 13, 0], y: [0, -4, 4, -2, 0], rotate: [0, 8, -5, 6, 0] },
@@ -104,7 +104,7 @@ const SHUFFLES: Record<
 
 /** The cut: a packet lifted off, set beside the deck, and completed. */
 const CUT = {
-  duration: 0.62,
+  duration: 0.48,
   times: [0, 0.34, 0.66, 1],
   frames: { x: [0, 20, 20, 0], y: [0, -9, -1, 0], rotate: [0, 4, 1, 0] },
 };
@@ -155,8 +155,8 @@ export function Shoe({
         ...CUT.frames,
         transition: { duration: CUT.duration, times: CUT.times, ease: EASE.arrive },
       });
-      cues.current.push(window.setTimeout(() => playSound("cut"), 120));
-      cues.current.push(window.setTimeout(() => playSound("square"), 500));
+      cues.current.push(window.setTimeout(() => playSound("cut"), 90));
+      cues.current.push(window.setTimeout(() => playSound("square"), Math.round(CUT.duration * 780)));
       return;
     }
 
@@ -185,10 +185,10 @@ export function Shoe({
         rotate: [0, 0, 14, -6, 0],
         x: [0, 0, 9, -2, 0],
         y: [0, 0, -7, 1, 0],
-        transition: { duration: 1.1, times: [0, 0.3, 0.55, 0.8, 1], ease: EASE.drift },
+        transition: { duration: 0.85, times: [0, 0.3, 0.55, 0.8, 1], ease: EASE.drift },
       });
-      cues.current.push(window.setTimeout(() => playSound("cut"), 340));
-      cues.current.push(window.setTimeout(() => playSound("square"), 900));
+      cues.current.push(window.setTimeout(() => playSound("cut"), 250));
+      cues.current.push(window.setTimeout(() => playSound("square"), 680));
     }
 
     return () => {
@@ -331,7 +331,7 @@ export function DealerMarker({ className }: { className?: string }) {
         transition={
           reduced
             ? { duration: DURATION.tooltip }
-            : { duration: 2.2, repeat: active ? Infinity : 0, ease: EASE.drift }
+            : { duration: 3.2, repeat: active ? Infinity : 0, ease: EASE.drift }
         }
       />
     </div>

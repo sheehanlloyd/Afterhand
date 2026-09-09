@@ -41,7 +41,7 @@ export function Segmented<T extends string>({
             className={cn(
               "relative font-mono tracking-[0.12em] uppercase transition-colors duration-150",
               size === "sm" ? "px-3 py-1.5 text-[10px]" : "px-4 py-2.5 text-[11px]",
-              active ? "bg-fg/[0.07] text-fg" : "text-fg-3 hover:text-fg-2",
+              active ? "bg-accent-2/12 text-fg" : "text-fg-3 hover:text-fg-2",
             )}
           >
             {option.label}

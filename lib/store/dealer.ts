@@ -52,11 +52,11 @@ const SHUFFLE_VARIANTS: ShuffleVariant[] = [
 
 /** Roughly how long each shuffle takes to perform, in milliseconds. */
 export const SHUFFLE_DURATION: Record<ShuffleVariant, number> = {
-  riffle: 900,
-  "table-riffle": 1000,
-  strip: 820,
-  "running-cuts": 880,
-  wash: 1200,
+  riffle: 720,
+  "table-riffle": 800,
+  strip: 660,
+  "running-cuts": 700,
+  wash: 950,
 };
 
 /**
@@ -121,13 +121,13 @@ export const useDealer = create<DealerStore>((set, get) => ({
     /* Two passes, the way a dealer actually does it, then the cut. */
     const first = SHUFFLE_DURATION[variant];
     const second = SHUFFLE_DURATION.riffle;
-    const cut = 620;
+    const cut = 480;
 
     set((current) => ({ state: "preparing", variant, beat: current.beat + 1 }));
     timers.push(
       setTimeout(() => {
         set((current) => ({ state: "shuffling", beat: current.beat + 1 }));
-      }, 340),
+      }, 240),
     );
     timers.push(
       setTimeout(
@@ -138,7 +138,7 @@ export const useDealer = create<DealerStore>((set, get) => ({
             beat: current.beat + 1,
           }));
         },
-        340 + first,
+        240 + first,
       ),
     );
     timers.push(
@@ -146,7 +146,7 @@ export const useDealer = create<DealerStore>((set, get) => ({
         () => {
           set((current) => ({ state: "cutting", beat: current.beat + 1 }));
         },
-        340 + first + second,
+        240 + first + second,
       ),
     );
     timers.push(
@@ -154,11 +154,11 @@ export const useDealer = create<DealerStore>((set, get) => ({
         () => {
           get().enter("idle");
         },
-        340 + first + second + cut,
+        240 + first + second + cut,
       ),
     );
 
-    return 340 + first + second + cut;
+    return 240 + first + second + cut;
   },
 
   reset: () => {

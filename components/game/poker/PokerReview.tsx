@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { SUIT_GLYPH, isRedSuit } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import { TRANSITION } from "@/lib/motion/tokens";
 
 const TONE: Record<PokerAssessmentKey, string> = {
   strong: "border-positive/60 text-positive",
@@ -151,7 +152,7 @@ export function PokerReview({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+              transition={TRANSITION.menu}
               className="overflow-hidden"
             >
               <div className="mt-6 border-t border-line pt-5">
