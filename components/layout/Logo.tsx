@@ -31,7 +31,7 @@ export function Logo({
     >
       <span
         aria-hidden="true"
-        className="relative grid h-[22px] w-[22px] shrink-0 translate-y-[3px] place-items-center border border-accent-2/70 bg-accent-2/10 transition-colors group-hover:bg-accent-2/20"
+        className="relative grid h-[22px] w-[22px] shrink-0 translate-y-[3px] place-items-center border border-accent-2/75 bg-accent-2/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.28)] transition-colors group-hover:bg-accent-2/22"
       >
         <span className="display text-[13px] leading-none text-accent-2">A</span>
       </span>

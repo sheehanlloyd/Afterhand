@@ -23,6 +23,7 @@ import { formatDuration, formatMoney, formatPercent } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { TableSpaceProvider } from "@/lib/motion/table-space";
 import { ChipFlightLayer } from "@/components/chips/ChipFlight";
+import { TRANSITION } from "@/lib/motion/tokens";
 
 const STACKS = [500, 1000, 2500, 5000];
 
@@ -332,10 +333,10 @@ export function PokerScreen() {
         {store.reviewOpen && store.reviewSummary ? (
           <motion.aside
             key="poker-review"
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={TRANSITION.screen}
             aria-label="Hand review"
             className="absolute right-0 bottom-0 left-0 z-20 max-h-[68%] border-t border-line bg-surface shadow-[0_-20px_50px_-30px_rgba(0,0,0,0.9)] sm:right-5 sm:bottom-5 sm:left-auto sm:max-h-[calc(100%-2.5rem)] sm:w-[24rem] sm:border sm:border-line"
           >

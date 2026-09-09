@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Pocket, pocketColour, pocketsFor, RouletteVariant } from "@/lib/games/roulette/engine";
-import { EASE } from "@/lib/motion/tokens";
+import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
 
 const OUTER = 96;
 const INNER = 68;
@@ -97,7 +97,7 @@ export function RouletteWheel({
                     strokeWidth="0.8"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 0.4, delay: 0.15, ease: EASE.arrive }}
+                    transition={{ duration: DURATION.reveal, delay: 0.08, ease: EASE.arrive }}
                   />
                 ) : null}
                 <text
@@ -138,7 +138,7 @@ export function RouletteWheel({
             dominantBaseline="central"
             initial={{ opacity: 0 }}
             animate={{ opacity: spinning ? 0.25 : 1 }}
-            transition={{ duration: 0.3, ease: EASE.arrive }}
+            transition={{ duration: DURATION.reveal, ease: EASE.arrive }}
           >
             {result}
           </motion.text>
@@ -164,7 +164,7 @@ export function RouletteWheel({
         {spinning && !reduced ? (
           <motion.g
             animate={{ rotate: 360 }}
-            transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: DURATION.wheelSpin, repeat: Infinity, ease: "linear" }}
             style={{ originX: "100px", originY: "100px" }}
           >
             <path
@@ -187,9 +187,9 @@ export function RouletteWheel({
             scale: ballAt === null ? 1 : spinning ? [1, 1, 0.94] : 0.94,
           }}
           transition={{
-            duration: reduced ? 0 : spinning ? 2.6 : 0.4,
-            ease: spinning ? [0.1, 0.72, 0.2, 1] : EASE.arrive,
-            scale: { duration: reduced ? 0 : spinning ? 2.6 : 0.2, times: [0, 0.62, 1] },
+            duration: reduced ? 0 : spinning ? 1.9 : DURATION.reveal,
+            ease: spinning ? [0.12, 0.7, 0.22, 1] : EASE.arrive,
+            scale: { duration: reduced ? 0 : spinning ? 1.9 : 0.16, times: [0, 0.62, 1] },
           }}
           style={{ originX: "100px", originY: "100px" }}
         >
@@ -199,7 +199,7 @@ export function RouletteWheel({
             key={spinning ? "rolling" : `settled-${turn}`}
             initial={{ rotate: spinning || reduced ? 0 : 9 }}
             animate={{ rotate: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 11, mass: 0.6 }}
+            transition={SPRING.wobble}
             style={{ originX: "100px", originY: "100px" }}
           >
             <ellipse

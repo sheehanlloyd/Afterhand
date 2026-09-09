@@ -8,6 +8,8 @@ import { FILMS, FILM_ORDER } from "@/lib/content/films";
 import { GAMES } from "@/lib/content/games";
 import { GameId } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import { LinkButton } from "@/components/ui/LinkButton";
+import { DURATION, EASE } from "@/lib/motion/tokens";
 
 /**
  * Four tables, one projector. Only the selected film is mounted, so switching
@@ -57,7 +59,7 @@ export function FilmGallery({
                     layoutId="film-tab-marker"
                     aria-hidden="true"
                     className="absolute right-0 -bottom-px left-0 h-[2px] bg-accent-2"
-                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: DURATION.menu, ease: EASE.arriveShort }}
                   />
                 ) : null}
               </button>
@@ -68,20 +70,17 @@ export function FilmGallery({
         <AnimatePresence mode="wait">
           <motion.div
             key={active}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: DURATION.menu, ease: EASE.arriveShort }}
             className="mt-7"
           >
             <p className="max-w-sm text-[14.5px] leading-relaxed text-fg-2">{game.description}</p>
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <Link
-                href={game.play}
-                className="inline-flex h-10 items-center rounded-sm bg-[var(--btn-bg)] px-5 font-mono text-[11px] tracking-[0.14em] text-[var(--btn-fg)] uppercase transition-[filter] hover:brightness-110"
-              >
+              <LinkButton href={game.play} variant="primary" size="md" plate>
                 Play {game.name}
-              </Link>
+              </LinkButton>
               <Link
                 href={game.rules}
                 prefetch={false}

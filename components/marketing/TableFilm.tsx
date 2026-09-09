@@ -9,6 +9,7 @@ import { ChipFace } from "@/components/chips/Chip";
 import { FilmCard, FilmFrame, FilmScript, FilmSeat } from "@/lib/content/films";
 import { Card } from "@/types";
 import { cn } from "@/lib/utils/cn";
+import { DURATION, EASE } from "@/lib/motion/tokens";
 
 /**
  * A hand that plays itself.
@@ -21,8 +22,6 @@ import { cn } from "@/lib/utils/cn";
  * offered as a static list underneath, because a caption strip that rewrites
  * itself every second and then loops is unusable through a screen reader.
  */
-
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 function toCard(seat: string, position: number, entry: FilmCard): Card {
   return { rank: entry.rank, suit: entry.suit, id: `${seat}-${position}` };
@@ -74,7 +73,7 @@ function Seat({
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.24, ease: EASE }}
+            transition={{ duration: DURATION.tooltip, ease: EASE.arriveShort }}
             className="font-mono text-[10px] tracking-[0.2em] text-[rgba(201,167,94,0.75)] uppercase"
           >
             {seat.value}
@@ -94,7 +93,7 @@ function Pocket({ pocket }: { pocket: NonNullable<FilmFrame["pocket"]> }) {
     <motion.span
       initial={{ scale: 0.6, opacity: 0, rotate: -25 }}
       animate={{ scale: 1, opacity: 1, rotate: 0 }}
-      transition={{ duration: 0.5, ease: EASE }}
+      transition={{ duration: DURATION.chip, ease: EASE.arrive }}
       className="flex h-14 w-14 items-center justify-center rounded-full font-mono text-[17px] text-[#f2ece0] tabular-nums"
       style={{
         background: `radial-gradient(circle at 36% 26%, color-mix(in srgb, ${fill} 82%, white), ${fill})`,
@@ -258,7 +257,7 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
                     // which flattens the stack into a single chip.
                     animate={{ opacity: 1, y: position * -5, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.85 }}
-                    transition={{ duration: 0.3, ease: EASE, delay: position * 0.07 }}
+                    transition={{ duration: DURATION.turn, ease: EASE.arrive, delay: position * 0.04 }}
                     className={position > 0 ? "-ml-3 block" : "block"}
                   >
                     <ChipFace value={value} />
@@ -287,7 +286,7 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 14 }}
-                transition={{ duration: 0.42, ease: EASE }}
+                transition={{ duration: DURATION.screen, ease: EASE.arrive }}
                 className="w-full border border-[rgba(201,167,94,0.3)] bg-[#0a0e0c] p-3 sm:p-4"
               >
                 <div className="flex items-center gap-2">
@@ -312,7 +311,7 @@ export function TableFilm({ script, className, plateNumber = "Fig. 1" }: TableFi
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.26, ease: EASE }}
+                transition={{ duration: DURATION.menu, ease: EASE.arriveShort }}
                 className="w-full text-center font-mono text-[9px] leading-relaxed tracking-[0.12em] text-[rgba(236,229,216,0.5)] uppercase sm:text-[10px]"
               >
                 {frame.caption}

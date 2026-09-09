@@ -4,7 +4,7 @@ import { CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "rea
 import { motion, useReducedMotion } from "framer-motion";
 import { Card, SUIT_GLYPH, cardLabel, isRedSuit } from "@/types";
 import { cn } from "@/lib/utils/cn";
-import { DURATION, EASE, RHYTHM, SMEAR_MAX } from "@/lib/motion/tokens";
+import { DURATION, EASE, RHYTHM, SMEAR_MAX, SPRING } from "@/lib/motion/tokens";
 import { restingPose, wobbleOf } from "@/lib/motion/jitter";
 import { useFlight, type Flight } from "@/lib/motion/table-space";
 import { PIP_LAYOUT } from "./pips";
@@ -326,10 +326,9 @@ function CardBody({
     x: 0,
     y: 0,
     rotate: rest.rotate,
-    /* Fast in, a hair past the resting size as it meets the felt, then a soft
-       settle onto it. This is the landing, and it is what stops a card that has
-       stopped moving from looking like a card that was placed there. */
-    scale: [0.9, 1.05, 0.994, 1],
+    /* The flight is a timed ease. The scale is a spring, so the card meets the
+       felt with a physical settle rather than a keyed overshoot. */
+    scale: 1,
   };
 
   const leavingTo = exit
@@ -362,12 +361,10 @@ function CardBody({
               delay: wait,
               duration,
               ease,
-              opacity: { delay: wait, duration: 0.1 },
+              opacity: { delay: wait, duration: 0.08 },
               scale: {
                 delay: wait,
-                duration: duration + RHYTHM.landing / 1000,
-                times: [0, 0.66, 0.86, 1],
-                ease,
+                ...SPRING.settle,
               },
             }
       }
@@ -427,7 +424,7 @@ function CardBody({
               initial={inert || !from ? false : { rotateX: 13 }}
               animate={{ rotateX: 0 }}
               transition={{ delay: wait, duration: duration + 0.06, ease }}
-              whileHover={interactive && !inert ? { y: -7, scale: 1.035 } : undefined}
+              whileHover={interactive && !inert ? { y: -4, scale: 1.02 } : undefined}
               style={{ transformStyle: "preserve-3d" }}
             >
               <motion.div

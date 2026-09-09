@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { loadTutorials, saveTutorials } from "@/lib/storage/preferences";
 import { cn } from "@/lib/utils/cn";
+import { TRANSITION } from "@/lib/motion/tokens";
 
 export function TutorialScreen({ tutorial }: { tutorial: Tutorial }) {
   const [step, setStep] = useState(0);
@@ -64,10 +65,10 @@ export function TutorialScreen({ tutorial }: { tutorial: Tutorial }) {
         <AnimatePresence mode="wait" initial={false}>
           <motion.article
             key={step}
-            initial={{ opacity: 0, x: direction * 18 }}
+            initial={{ opacity: 0, x: direction * 14 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -18 }}
-            transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, x: direction * -14 }}
+            transition={TRANSITION.menu}
             className="border border-line bg-surface-2 p-6 sm:p-9"
           >
             <div className="flex items-baseline gap-4">

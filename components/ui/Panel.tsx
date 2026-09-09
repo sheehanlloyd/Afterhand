@@ -16,10 +16,16 @@ export function SectionHead({
   return (
     <div className={cn("w-full", className)}>
       <hr className="rule-double" />
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:gap-6">
-        <span className="label shrink-0 pt-1 sm:w-12">{index}</span>
-        <h2 className="display flex-1 text-[clamp(1.5rem,3.2vw,2.1rem)]">{title}</h2>
-        {note ? <span className="text-[13px] text-fg-2 sm:max-w-xs">{note}</span> : null}
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-8">
+        <span className="label shrink-0 sm:w-12 sm:pb-1">{index}</span>
+        <h2 className="display flex-1 text-[clamp(1.65rem,3.4vw,2.25rem)] leading-[1.05]">
+          {title}
+        </h2>
+        {note ? (
+          <span className="text-[13.5px] leading-relaxed text-fg-2 sm:max-w-xs sm:pb-1">
+            {note}
+          </span>
+        ) : null}
       </div>
     </div>
   );

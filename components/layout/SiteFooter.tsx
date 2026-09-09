@@ -76,9 +76,9 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-line pt-5 font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-14 flex flex-col gap-2 border-t border-line pt-6 font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase sm:flex-row sm:items-center sm:justify-between">
           <p>Simulated money only</p>
-          <p>No deposits. No withdrawals. No real money gambling.</p>
+          <p>No deposits · No withdrawals · No real money gambling</p>
         </div>
       </div>
     </footer>

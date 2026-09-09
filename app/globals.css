@@ -151,27 +151,31 @@
     font-family: var(--font-sans);
     font-synthesis-weight: none;
     overscroll-behavior-y: none;
-    transition: background-color 0.4s ease, color 0.4s ease;
+    transition: background-color 0.32s cubic-bezier(0.2, 0.9, 0.28, 1),
+      color 0.32s cubic-bezier(0.2, 0.9, 0.28, 1);
   }
 
-  /* Paper stock texture. Two crossed gradients, no image payload. */
+  /* Paper stock: a warm wash plus a looser grain, so it reads as page rather
+     than as a tight hatch. */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.55;
     background-image:
-      repeating-linear-gradient(0deg, rgba(21, 24, 26, 0.022) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(90deg, rgba(21, 24, 26, 0.016) 0 1px, transparent 1px 4px);
+      radial-gradient(92% 52% at 50% -12%, rgba(255, 250, 240, 0.55), transparent 58%),
+      radial-gradient(70% 40% at 50% 110%, rgba(154, 106, 31, 0.05), transparent 70%),
+      repeating-linear-gradient(0deg, rgba(21, 24, 26, 0.016) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(90deg, rgba(21, 24, 26, 0.01) 0 1px, transparent 1px 5px);
   }
 
   :root[data-surface="room"] body::before {
-    opacity: 0.6;
+    opacity: 0.85;
     background-image:
-      radial-gradient(110% 70% at 50% -15%, rgba(201, 167, 94, 0.07), transparent 62%),
-      radial-gradient(80% 60% at 50% 115%, rgba(22, 72, 57, 0.2), transparent 68%);
+      radial-gradient(110% 70% at 50% -15%, rgba(201, 167, 94, 0.09), transparent 62%),
+      radial-gradient(80% 60% at 50% 115%, rgba(22, 72, 57, 0.28), transparent 68%);
   }
 
   ::selection {
@@ -255,9 +259,10 @@
   .felt {
     position: relative;
     background:
-      radial-gradient(118% 74% at 50% -6%, rgba(226, 240, 231, 0.05), transparent 46%),
-      radial-gradient(96% 84% at 50% 118%, rgba(0, 0, 0, 0.5), transparent 62%),
-      linear-gradient(178deg, #123a2e 0%, #0d2c23 46%, #08211a 100%);
+      radial-gradient(118% 74% at 50% -6%, rgba(236, 229, 216, 0.07), transparent 46%),
+      radial-gradient(70% 50% at 50% 42%, rgba(201, 167, 94, 0.045), transparent 58%),
+      radial-gradient(96% 84% at 50% 118%, rgba(0, 0, 0, 0.55), transparent 62%),
+      linear-gradient(178deg, #153f32 0%, #0e3026 46%, #08211a 100%);
   }
 
   /* Woven nap plus a vignette, so the middle of the table catches the light. */

@@ -1,5 +1,5 @@
 import Link, { LinkProps } from "next/link";
-import { ReactNode } from "react";
+import { ReactNode, type MouseEventHandler } from "react";
 import { cn } from "@/lib/utils/cn";
 import {
   ButtonSize,
@@ -17,6 +17,7 @@ export function LinkButton({
   block,
   plate,
   children,
+  onClick,
   ...props
 }: LinkProps & {
   className?: string;
@@ -28,6 +29,7 @@ export function LinkButton({
   "aria-label"?: string;
   target?: string;
   rel?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
 }) {
   return (
     <Link
@@ -39,6 +41,7 @@ export function LinkButton({
         block && "w-full",
         className,
       )}
+      onClick={onClick}
       {...props}
     >
       {children}

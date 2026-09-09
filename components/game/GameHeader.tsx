@@ -7,7 +7,7 @@ import { Logo } from "@/components/layout/Logo";
 import { formatMoney } from "@/lib/utils/format";
 import { Counter } from "@/components/ui/Counter";
 import { useTableAnchor } from "@/lib/motion/table-space";
-import { DURATION } from "@/lib/motion/tokens";
+import { DURATION, TRANSITION } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
 export interface GameMenuItem {
@@ -87,7 +87,7 @@ export function GameHeader({
                 value={bankroll}
                 format={formatMoney}
                 duration={DURATION.reveal}
-                delay={0.18}
+                delay={0.08}
                 className="block text-[14px] leading-none text-fg sm:mt-1 sm:text-[15px]"
               />
             </div>
@@ -98,7 +98,7 @@ export function GameHeader({
             onClick={onToggleSound}
             aria-pressed={soundEnabled}
             aria-label={soundEnabled ? "Mute sound" : "Turn sound on"}
-            className="grid h-11 w-11 shrink-0 place-items-center border border-line text-fg-2 transition-colors hover:border-line-2 hover:text-fg"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-sm border border-line text-fg-2 transition-colors hover:border-line-2 hover:bg-fg/[0.04] hover:text-fg"
           >
             <SoundIcon on={soundEnabled} />
           </button>
@@ -109,7 +109,7 @@ export function GameHeader({
               onClick={() => setOpen((value) => !value)}
               aria-expanded={open}
               aria-haspopup="menu"
-              className="h-11 shrink-0 border border-line px-3.5 font-mono text-[10px] tracking-[0.14em] text-fg-2 uppercase transition-colors hover:border-line-2 hover:text-fg sm:px-4"
+              className="h-11 shrink-0 rounded-sm border border-line px-3.5 font-mono text-[10px] tracking-[0.14em] text-fg-2 uppercase transition-colors hover:border-line-2 hover:bg-fg/[0.04] hover:text-fg sm:px-4"
             >
               Menu
             </button>
@@ -120,7 +120,7 @@ export function GameHeader({
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.16 }}
+                  transition={TRANSITION.fade}
                   className="absolute right-0 z-40 mt-2 w-52 border border-line bg-surface-2 shadow-[0_20px_44px_-24px_rgba(0,0,0,0.8)]"
                 >
                   {menu.map((item) =>

@@ -5,6 +5,7 @@ import { ReactNode, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useBodyLock } from "@/lib/utils/use-body-lock";
 import { cn } from "@/lib/utils/cn";
+import { DURATION, EASE } from "@/lib/motion/tokens";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -78,19 +79,19 @@ export function Overlay({
 
   const motionProps = {
     center: {
-      initial: { opacity: 0, y: 12, scale: 0.98 },
+      initial: { opacity: 0, y: 8, scale: 0.985 },
       animate: { opacity: 1, y: 0, scale: 1 },
-      exit: { opacity: 0, y: 8, scale: 0.98 },
+      exit: { opacity: 0, y: 6, scale: 0.985 },
     },
     right: {
-      initial: { opacity: 0, x: 32 },
+      initial: { opacity: 0, x: 24 },
       animate: { opacity: 1, x: 0 },
-      exit: { opacity: 0, x: 32 },
+      exit: { opacity: 0, x: 24 },
     },
     bottom: {
-      initial: { opacity: 0, y: 40 },
+      initial: { opacity: 0, y: 28 },
       animate: { opacity: 1, y: 0 },
-      exit: { opacity: 0, y: 40 },
+      exit: { opacity: 0, y: 28 },
     },
   } as const;
 
@@ -103,7 +104,7 @@ export function Overlay({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: DURATION.tooltip }}
             onClick={onClose}
           />
           <motion.div
@@ -113,7 +114,7 @@ export function Overlay({
             aria-labelledby={labelledBy}
             tabIndex={-1}
             className={cn("relative outline-none", className)}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.menu, ease: EASE.arriveShort }}
             {...motionProps[align]}
           >
             {children}

@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import { dropTargetAt, useChipDrag, useDragGuard } from "./chip-drag";
 import { cn } from "@/lib/utils/cn";
+import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
 
 export interface ChipStyle {
   body: string;
@@ -133,7 +134,7 @@ export function Chip({
         dragSnapToOrigin: true,
         dragMomentum: false,
         dragElastic: 0.9,
-        whileDrag: { scale: 1.16, zIndex: 50 },
+        whileDrag: { scale: 1.1, zIndex: 50 },
         onDragStart: () => setDragging(true),
         onDrag: (_: unknown, info: PanInfo) => {
           // Only a deliberate movement counts as a drag. Framer starts the
@@ -164,9 +165,9 @@ export function Chip({
         onClick?.();
       }}
       aria-label={`Add $${value} to your bet`}
-      whileHover={disabled || reduced ? undefined : { y: -5 }}
-      whileTap={disabled || reduced ? undefined : { y: -1, scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 420, damping: 26 }}
+      whileHover={disabled || reduced ? undefined : { y: -3 }}
+      whileTap={disabled || reduced ? undefined : { scale: 0.96 }}
+      transition={SPRING.ui}
       className={cn(
         "relative rounded-full transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-35",
         canDrag && "cursor-grab active:cursor-grabbing",
@@ -217,7 +218,7 @@ export function BetStack({
           className="absolute left-0"
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, delay: index * 0.03 }}
+          transition={{ duration: DURATION.tooltip, delay: index * 0.025, ease: EASE.arriveShort }}
           style={{ bottom: index * 4 }}
         >
           <ChipFace value={value} />

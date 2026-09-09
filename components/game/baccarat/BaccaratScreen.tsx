@@ -41,7 +41,7 @@ import { DealerRail } from "@/components/game/table/DealerRail";
 import { TableCamera } from "@/components/game/table/TableCamera";
 import { useDealer } from "@/lib/store/dealer";
 import { applyStep, revealSteps, type RevealCounts } from "@/lib/motion/deal-order";
-import { DURATION, RHYTHM } from "@/lib/motion/tokens";
+import { DURATION, RHYTHM, TRANSITION } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
 const RULES = DEFAULT_BACCARAT_RULES;
@@ -569,10 +569,10 @@ function BaccaratTable() {
         <AnimatePresence>
           {settled && mode === "learn" && round ? (
             <motion.aside
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={TRANSITION.screen}
               aria-label="Hand explanation"
               className="absolute right-0 bottom-0 left-0 z-20 max-h-[62%] overflow-y-auto border-t border-line bg-surface sm:right-5 sm:bottom-5 sm:left-auto sm:max-h-[calc(100%-2.5rem)] sm:w-[23rem] sm:border sm:border-line"
             >

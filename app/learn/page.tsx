@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { SectionHead } from "@/components/ui/Panel";
 import { LearningProfile } from "@/components/learn/LearningProfile";
+import { GameGlyph } from "@/components/marketing/GameGlyph";
 import { TUTORIALS } from "@/lib/content/tutorials";
 import { GAMES } from "@/lib/content/games";
 
@@ -37,10 +38,20 @@ export default function LearnPage() {
               <Link
                 key={game.id}
                 href={game.learn}
-                className="group -mt-px -ml-px flex flex-col border border-line p-6 transition-colors hover:bg-surface-2"
+                className="group relative -mt-px -ml-px flex flex-col border border-line p-6 transition-colors hover:bg-surface-2"
               >
-                <span className="label">{tutorial.minutes} minutes</span>
-                <h3 className="display mt-3 text-[22px] leading-none transition-colors group-hover:text-accent">
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-accent-2 transition-transform duration-300 ease-out group-hover:scale-x-100"
+                />
+                <div className="flex items-center justify-between gap-4">
+                  <GameGlyph
+                    game={game.id}
+                    className="h-8 w-9 text-accent-2/70 transition-colors group-hover:text-accent-2"
+                  />
+                  <span className="label">{tutorial.minutes} min</span>
+                </div>
+                <h3 className="display mt-4 text-[22px] leading-none transition-colors group-hover:text-accent">
                   {tutorial.title}
                 </h3>
                 <p className="mt-3 text-[13.5px] leading-relaxed text-fg-2">{tutorial.intro}</p>
