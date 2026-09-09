@@ -20,7 +20,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-surface/88 backdrop-blur-lg">
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur-xl">
       <div className="mx-auto flex h-[56px] w-full max-w-[var(--shell-max)] items-center gap-8 px-5 sm:px-8">
         <Logo />
 
@@ -62,15 +62,11 @@ export function SiteHeader() {
           >
             Settings
           </Link>
-          <LinkButton
-            href="/games/blackjack"
-            variant="primary"
-            size="sm"
-            plate
-            className="hidden md:inline-flex"
-          >
-            Deal me in
-          </LinkButton>
+          <span className="hidden md:inline-flex">
+            <LinkButton href="/games/blackjack" variant="primary" size="sm" plate>
+              Deal me in
+            </LinkButton>
+          </span>
           <button
             type="button"
             className="font-mono text-[11px] tracking-[0.14em] text-fg-2 uppercase md:hidden"
