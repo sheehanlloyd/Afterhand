@@ -68,35 +68,35 @@ const BLACKJACK: FilmScript = {
   summary: "A blackjack hand playing itself, ending in the post-hand review.",
   frames: [
     {
-      hold: 800,
+      hold: 700,
       caption: "Place your bet.",
       top: { label: "Dealer" },
       bottom: { label: "You" },
       chips: [25, 100, 5],
     },
     {
-      hold: 1150,
+      hold: 980,
       caption: "Two cards each. The dealer shows a nine.",
       top: { label: "Dealer", cards: [c("9", "spades"), c("K", "hearts", true)], value: "9" },
       bottom: { label: "You", cards: [c("A", "clubs"), c("7", "diamonds")], value: "Soft 18" },
       chips: [25, 100, 5],
     },
     {
-      hold: 900,
+      hold: 780,
       caption: "You stand. Nothing on screen tells you whether that was right.",
       top: { label: "Dealer", cards: [c("9", "spades"), c("K", "hearts", true)], value: "9" },
       bottom: { label: "You", cards: [c("A", "clubs"), c("7", "diamonds")], value: "Stand on 18" },
       chips: [25, 100, 5],
     },
     {
-      hold: 1050,
+      hold: 900,
       caption: "The dealer turns the hole card.",
       top: { label: "Dealer", cards: [c("9", "spades"), c("K", "hearts")], value: "19" },
       bottom: { label: "You", cards: [c("A", "clubs"), c("7", "diamonds")], value: "18" },
       chips: [25, 100, 5],
     },
     {
-      hold: 2300,
+      hold: 1550,
       caption: "Dealer wins with 19.",
       top: { label: "Dealer", cards: [c("9", "spades"), c("K", "hearts")], value: "19" },
       bottom: { label: "You", cards: [c("A", "clubs"), c("7", "diamonds")], value: "18" },
@@ -115,14 +115,14 @@ const POKER: FilmScript = {
   summary: "A Texas Hold'em hand playing itself, ending in the post-hand review.",
   frames: [
     {
-      hold: 1000,
+      hold: 850,
       caption: "You are dealt ace king, suited, in late position.",
       top: { label: "Board" },
       bottom: { label: "You", cards: [c("A", "spades"), c("K", "spades")], value: "Ace king suited" },
       chips: [10, 5],
     },
     {
-      hold: 1200,
+      hold: 1000,
       caption: "The flop brings a king. Two low cards, no flush draw.",
       top: {
         label: "Board",
@@ -133,7 +133,7 @@ const POKER: FilmScript = {
       chips: [10, 5],
     },
     {
-      hold: 1050,
+      hold: 900,
       caption: "Your opponent bets 30 into a pot of 120.",
       top: {
         label: "Board",
@@ -144,7 +144,7 @@ const POKER: FilmScript = {
       chips: [25, 5],
     },
     {
-      hold: 1050,
+      hold: 900,
       caption: "You raise to 95.",
       top: {
         label: "Board",
@@ -155,7 +155,7 @@ const POKER: FilmScript = {
       chips: [50, 25, 10],
     },
     {
-      hold: 2300,
+      hold: 1550,
       caption: "Your opponent folds.",
       top: {
         label: "Board",
@@ -178,28 +178,28 @@ const BACCARAT: FilmScript = {
   summary: "A baccarat coup playing itself, with the drawing rules explained.",
   frames: [
     {
-      hold: 850,
+      hold: 720,
       caption: "You back the banker. The rest is automatic.",
       top: { label: "Banker" },
       bottom: { label: "Player" },
       chips: [50, 10],
     },
     {
-      hold: 1200,
+      hold: 1000,
       caption: "Two cards a side. Player holds seven, banker holds three.",
       top: { label: "Banker", cards: [c("9", "hearts"), c("4", "spades")], value: "3" },
       bottom: { label: "Player", cards: [c("5", "diamonds"), c("2", "clubs")], value: "7" },
       chips: [50, 10],
     },
     {
-      hold: 1100,
+      hold: 920,
       caption: "Player stands. The rule is to stand on six or seven.",
       top: { label: "Banker", cards: [c("9", "hearts"), c("4", "spades")], value: "3" },
       bottom: { label: "Player", cards: [c("5", "diamonds"), c("2", "clubs")], value: "Stands on 7" },
       chips: [50, 10],
     },
     {
-      hold: 1100,
+      hold: 920,
       caption: "The player stood, so the banker draws on anything up to five.",
       top: {
         label: "Banker",
@@ -210,7 +210,7 @@ const BACCARAT: FilmScript = {
       chips: [50, 10],
     },
     {
-      hold: 2300,
+      hold: 1550,
       caption: "Banker wins, eight to seven.",
       top: {
         label: "Banker",
@@ -233,21 +233,21 @@ const ROULETTE: FilmScript = {
   summary: "A roulette spin playing itself, ending with where the house edge comes from.",
   frames: [
     {
-      hold: 900,
+      hold: 760,
       caption: "Chips down: red, and one straight up on seventeen.",
       top: { label: "Wheel", value: "European" },
       bottom: { label: "Your bets", value: "Red, and 17 straight up" },
       chips: [25, 5],
     },
     {
-      hold: 950,
+      hold: 800,
       caption: "No more bets.",
       top: { label: "Wheel", value: "Spinning" },
       bottom: { label: "Your bets", value: "Red, and 17 straight up" },
       chips: [25, 5],
     },
     {
-      hold: 1250,
+      hold: 1050,
       caption: "Seventeen, black.",
       top: { label: "Wheel", value: "17" },
       bottom: { label: "Your bets", value: "Straight up wins" },
@@ -255,7 +255,7 @@ const ROULETTE: FilmScript = {
       chips: [25, 5],
     },
     {
-      hold: 2300,
+      hold: 1550,
       caption: "The straight up pays 35 to 1. The red bet loses.",
       top: { label: "Wheel", value: "17" },
       bottom: { label: "Your bets", value: "Net +325" },

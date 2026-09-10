@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils/cn";
-import { DURATION } from "@/lib/motion/tokens";
+import { DURATION, EASE } from "@/lib/motion/tokens";
 
 /**
  * A block of cards seen as an object rather than as a picture of a card back.
@@ -76,7 +76,7 @@ export function DeckBlock({
         ...style,
       }}
       animate={{ boxShadow: edgeShadow(layers) }}
-      transition={{ duration: DURATION.turn }}
+      transition={{ duration: DURATION.turn, ease: EASE.arrive }}
     >
       {/* One inset rule and nothing else. A woven pattern at this size is
           noise rather than texture. */}

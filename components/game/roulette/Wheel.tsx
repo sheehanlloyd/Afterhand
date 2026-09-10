@@ -187,9 +187,9 @@ export function RouletteWheel({
             scale: ballAt === null ? 1 : spinning ? [1, 1, 0.94] : 0.94,
           }}
           transition={{
-            duration: reduced ? 0 : spinning ? 1.9 : DURATION.reveal,
+            duration: reduced ? 0 : spinning ? DURATION.wheelBall : DURATION.reveal,
             ease: spinning ? [0.12, 0.7, 0.22, 1] : EASE.arrive,
-            scale: { duration: reduced ? 0 : spinning ? 1.9 : 0.16, times: [0, 0.62, 1] },
+            scale: { duration: reduced ? 0 : spinning ? DURATION.wheelBall : DURATION.menu, times: [0, 0.62, 1] },
           }}
           style={{ originX: "100px", originY: "100px" }}
         >

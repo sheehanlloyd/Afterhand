@@ -7,6 +7,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import { Field, NumberField } from "@/components/ui/Field";
 import { formatMoney } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
+import { Kicker } from "@/components/ui/Panel";
 
 const PRESETS = [100, 500, 1000, 5000];
 const MIN = 20;
@@ -59,87 +60,77 @@ export function SimpleSetup({
         <hr className="rule-double mt-10" />
 
         <section className="mt-8">
-          <div className="section-head">
-            <span className="label pt-1">01</span>
-            <div>
-              <h2 className="text-[16px] font-semibold">Starting bankroll</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {PRESETS.map((amount) => (
-                  <button
-                    key={amount}
-                    type="button"
-                    onClick={() => {
-                      setCustom(false);
-                      setBankroll(amount);
-                    }}
-                    aria-pressed={!custom && bankroll === amount}
-                    className={cn(
-                      "tabular h-11 min-w-[5.5rem] border px-4 text-[14px] transition-colors",
-                      !custom && bankroll === amount
-                        ? "border-accent-2 bg-accent-2/10 text-fg"
-                        : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
-                    )}
-                  >
-                    {formatMoney(amount)}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setCustom(true)}
-                  aria-pressed={custom}
-                  className={cn(
-                    "h-11 border px-4 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors",
-                    custom
-                      ? "border-accent-2 bg-accent-2/10 text-fg"
-                      : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
-                  )}
-                >
-                  Custom
-                </button>
-              </div>
-              {custom ? (
-                <div className="mt-4 max-w-[16rem]">
-                  <Field label="Custom amount" hint={`${MIN} to ${MAX.toLocaleString("en-US")}`}>
-                    <NumberField
-                      value={bankroll}
-                      onChange={setBankroll}
-                      min={MIN}
-                      max={MAX}
-                      step={10}
-                      prefix="$"
-                      ariaLabel="Custom starting bankroll"
-                    />
-                  </Field>
-                </div>
-              ) : null}
-            </div>
+          <Kicker title="Starting bankroll" />
+          <div className="mt-4 flex flex-wrap gap-2">
+            {PRESETS.map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                onClick={() => {
+                  setCustom(false);
+                  setBankroll(amount);
+                }}
+                aria-pressed={!custom && bankroll === amount}
+                className={cn(
+                  "tabular h-11 min-w-[5.5rem] border px-4 text-[14px] transition-colors",
+                  !custom && bankroll === amount
+                    ? "border-accent-2 bg-accent-2/10 text-fg"
+                    : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
+                )}
+              >
+                {formatMoney(amount)}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCustom(true)}
+              aria-pressed={custom}
+              className={cn(
+                "h-11 border px-4 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors",
+                custom
+                  ? "border-accent-2 bg-accent-2/10 text-fg"
+                  : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
+              )}
+            >
+              Custom
+            </button>
           </div>
-        </section>
-
-        <section className="mt-9">
-          <div className="section-head">
-            <span className="label pt-1">02</span>
-            <div>
-              <h2 className="text-[16px] font-semibold">Mode</h2>
-              <div className="mt-4">
-                <Segmented
-                  label="Session mode"
-                  value={mode}
-                  onChange={setMode}
-                  options={[
-                    { value: "play", label: "Play" },
-                    { value: "learn", label: "Learn" },
-                  ]}
+          {custom ? (
+            <div className="mt-4 max-w-[16rem]">
+              <Field label="Custom amount" hint={`${MIN} to ${MAX.toLocaleString("en-US")}`}>
+                <NumberField
+                  value={bankroll}
+                  onChange={setBankroll}
+                  min={MIN}
+                  max={MAX}
+                  step={10}
+                  prefix="$"
+                  ariaLabel="Custom starting bankroll"
                 />
-              </div>
-              <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
-                {mode === "learn" ? learnCopy : playCopy}
-              </p>
+              </Field>
             </div>
-          </div>
+          ) : null}
         </section>
 
-        {extra ? <div className="mt-9">{extra}</div> : null}
+        <section className="mt-9 border-t border-line pt-8">
+          <Kicker title="Mode" />
+          <div className="mt-4">
+            <Segmented
+              label="Session mode"
+              value={mode}
+              onChange={setMode}
+              options={[
+                { value: "play", label: "Play" },
+                { value: "learn", label: "Learn" },
+              ]}
+            />
+          </div>
+          <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
+            {mode === "learn" ? learnCopy : playCopy}
+          </p>
+        </section>
+
+        {extra ? <div className="mt-9 border-t border-line pt-8">{extra}</div> : null}
 
         {error ? <p className="mt-8 text-[13px] text-negative">{error}</p> : null}
 

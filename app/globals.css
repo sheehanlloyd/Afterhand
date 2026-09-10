@@ -277,14 +277,6 @@
       repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
       radial-gradient(112% 96% at 50% 46%, transparent 34%, rgba(0, 0, 0, 0.42) 100%);
   }
-
-  /* Numbered editorial section head */
-  .section-head {
-    display: grid;
-    grid-template-columns: 3rem 1fr;
-    gap: 1rem;
-    align-items: baseline;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -22,12 +22,12 @@ import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Segmented } from "@/components/ui/Segmented";
 import { Stat } from "@/components/ui/Stat";
-import { SectionHead } from "@/components/ui/Panel";
+import { Kicker, InteriorHead } from "@/components/ui/Panel";
 import { Term } from "@/components/ui/Term";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils/cn";
-import { DURATION, TRANSITION } from "@/lib/motion/tokens";
+import { DURATION, EASE, TRANSITION } from "@/lib/motion/tokens";
 
 interface Answer {
   scenario: PokerScenario;
@@ -125,7 +125,7 @@ export function PokerPracticeScreen() {
             className="h-full bg-accent"
             initial={{ width: "0%" }}
             animate={{ width: `${progress * 100}%` }}
-            transition={{ duration: DURATION.screen, ease: "easeOut" }}
+            transition={{ duration: DURATION.screen, ease: EASE.arrive }}
           />
         </div>
 
@@ -322,8 +322,8 @@ export function PokerPracticeScreen() {
       </header>
 
       <div className="mt-12">
-        <SectionHead index="01" title="Choose a topic" />
-        <div className="mt-8 grid sm:grid-cols-2">
+        <Kicker title="Choose a topic" />
+        <div className="mt-6 grid sm:grid-cols-2">
           {POKER_PRACTICE_TOPICS.map((entry) => (
             <button
               key={entry.id}
@@ -353,9 +353,9 @@ export function PokerPracticeScreen() {
         </div>
       </div>
 
-      <div className="mt-12">
-        <SectionHead index="02" title="Session size" />
-        <div className="mt-6 flex flex-wrap items-center gap-5">
+      <div className="mt-12 border-t border-line pt-10">
+        <Kicker title="Session size" />
+        <div className="mt-5 flex flex-wrap items-center gap-5">
           <Segmented
             label="Session size"
             value={String(size)}
@@ -372,7 +372,7 @@ export function PokerPracticeScreen() {
       </div>
 
       <div className="mt-16">
-        <SectionHead index="03" title="Why these two" />
+        <InteriorHead title="Why these two" />
         <div className="mt-8 grid gap-8 sm:grid-cols-2">
           <div>
             <h3 className="text-[15px] font-semibold">

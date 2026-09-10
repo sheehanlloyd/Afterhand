@@ -32,6 +32,7 @@ import { Stat } from "@/components/ui/Stat";
 import { Modal } from "@/components/ui/Modal";
 import { Segmented } from "@/components/ui/Segmented";
 import { Field } from "@/components/ui/Field";
+import { Kicker } from "@/components/ui/Panel";
 import { BettingBoard } from "./BettingBoard";
 import { RouletteWheel } from "./Wheel";
 import { DealerRail } from "@/components/game/table/DealerRail";
@@ -39,7 +40,7 @@ import { useDealer } from "@/lib/store/dealer";
 import { formatMoney, formatPercent } from "@/lib/utils/format";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils/cn";
-import { TRANSITION } from "@/lib/motion/tokens";
+import { DURATION, TRANSITION } from "@/lib/motion/tokens";
 
 const MIN_BET = 5;
 const MAX_TOTAL = 5000;
@@ -175,7 +176,7 @@ export function RouletteScreen() {
             updatedAt: Date.now(),
           });
         }
-      }, 2600),
+      }, Math.round(DURATION.wheelBall * 1000) + 450),
     );
   }
 
@@ -206,31 +207,28 @@ export function RouletteScreen() {
           learnCopy="After each spin, Afterhand breaks down each bet you placed: how often it wins, what it pays, and where the difference goes."
           playCopy="Just the wheel and the layout. Probabilities still sit next to every bet you place."
           extra={
-            <div className="section-head">
-              <span className="label pt-1">03</span>
-              <div>
-                <h2 className="text-[16px] font-semibold">Wheel</h2>
-                <div className="mt-4">
-                  <Field label="Variant">
-                    <Segmented
-                      label="Wheel variant"
-                      size="sm"
-                      value={variant}
-                      onChange={(value) => setVariant(value)}
-                      options={[
-                        { value: "european", label: "European" },
-                        { value: "american", label: "American" },
-                      ]}
-                    />
-                  </Field>
-                </div>
-                <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
-                  {variant === "european"
-                    ? "Thirty seven pockets, one zero. The house edge is about 2.70% on nearly every bet."
-                    : "Thirty eight pockets, including a double zero. That single extra pocket takes the edge to about 5.26%."}
-                </p>
+            <>
+              <Kicker title="Wheel" />
+              <div className="mt-4">
+                <Field label="Variant">
+                  <Segmented
+                    label="Wheel variant"
+                    size="sm"
+                    value={variant}
+                    onChange={(value) => setVariant(value)}
+                    options={[
+                      { value: "european", label: "European" },
+                      { value: "american", label: "American" },
+                    ]}
+                  />
+                </Field>
               </div>
-            </div>
+              <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
+                {variant === "european"
+                  ? "Thirty seven pockets, one zero. The house edge is about 2.70% on nearly every bet."
+                  : "Thirty eight pockets, including a double zero. That single extra pocket takes the edge to about 5.26%."}
+              </p>
+            </>
           }
           placard={
             <Placard

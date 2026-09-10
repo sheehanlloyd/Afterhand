@@ -118,7 +118,7 @@ export function BlackjackTable({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         animate={{ opacity: [0.55, 0.78, 0.55], scale: [1, 1.04, 1] }}
-        transition={{ duration: 13, repeat: Infinity, ease: EASE.drift }}
+        transition={{ duration: DURATION.ambient, repeat: Infinity, ease: EASE.drift }}
         style={{
           background:
             "radial-gradient(58% 34% at 50% 4%, rgba(226,240,231,0.09), rgba(226,240,231,0) 70%)",

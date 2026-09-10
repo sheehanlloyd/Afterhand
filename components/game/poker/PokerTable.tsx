@@ -18,7 +18,7 @@ import { TableCamera, type CameraFocus } from "@/components/game/table/TableCame
 import { WinBurst } from "@/components/game/table/WinBurst";
 import { TurnRing } from "@/components/game/table/TurnRing";
 import { useTableAnchor } from "@/lib/motion/table-space";
-import { DURATION, EASE, SPRING } from "@/lib/motion/tokens";
+import { DURATION, EASE, RHYTHM, SPRING } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils/cn";
 
 const STREET_LABEL: Record<string, string> = {
@@ -229,7 +229,7 @@ function Seat({
       </div>
 
       <div className="flex items-center gap-1.5">
-        <Counter value={player.stack} format={formatMoney} delay={0.2} className="text-[13px] text-fg" />
+        <Counter value={player.stack} format={formatMoney} delay={0.08} className="text-[13px] text-fg" />
         {player.committed > 0 ? (
           <span className="tabular border border-line-2 px-1.5 py-[2px] text-[11px] text-fg-2">
             {formatMoney(player.committed)}
@@ -365,9 +365,9 @@ function Pile({ amount }: { amount: number }) {
               initial={{ opacity: 0, y: -6, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{
-                duration: 0.16,
+                duration: DURATION.menu,
                 ease: EASE.arriveShort,
-                delay: Math.min(0.16, (column * STACK_HEIGHT + row) * 0.016),
+                delay: Math.min(DURATION.menu, (column * STACK_HEIGHT + row) * 0.016),
               }}
               style={{ bottom: row * 3.5 }}
             >
@@ -398,8 +398,8 @@ function BurnRun({ trigger }: { trigger: number }) {
   const [phase, setPhase] = useState<"in" | "out" | "gone">("in");
 
   useEffect(() => {
-    const away = window.setTimeout(() => setPhase("out"), 240);
-    const gone = window.setTimeout(() => setPhase("gone"), 900);
+    const away = window.setTimeout(() => setPhase("out"), RHYTHM.burnHold);
+    const gone = window.setTimeout(() => setPhase("gone"), RHYTHM.burnSweep);
     return () => {
       window.clearTimeout(away);
       window.clearTimeout(gone);
@@ -476,7 +476,7 @@ export function PokerTable({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         animate={{ opacity: [0.55, 0.78, 0.55], scale: [1, 1.04, 1] }}
-        transition={{ duration: 13, repeat: Infinity, ease: EASE.drift }}
+        transition={{ duration: DURATION.ambient, repeat: Infinity, ease: EASE.drift }}
         style={{
           background:
             "radial-gradient(58% 34% at 50% 4%, rgba(226,240,231,0.09), rgba(226,240,231,0) 70%)",

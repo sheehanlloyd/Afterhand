@@ -9,7 +9,7 @@ import { ChipFace } from "@/components/chips/Chip";
 import { FilmCard, FilmFrame, FilmScript, FilmSeat } from "@/lib/content/films";
 import { Card } from "@/types";
 import { cn } from "@/lib/utils/cn";
-import { DURATION, EASE } from "@/lib/motion/tokens";
+import { DURATION, EASE, RHYTHM } from "@/lib/motion/tokens";
 
 /**
  * A hand that plays itself.
@@ -59,7 +59,7 @@ function Seat({
             index={position}
             /* Tighter than a real table: the film has a second and a half to
                show a whole hand, so the deal is quick rather than measured. */
-            delay={position * 90}
+            delay={position * RHYTHM.betweenFilmCards}
             short
             className={position > 0 && align === "bottom" ? "-ml-3 rotate-[4deg]" : undefined}
           />

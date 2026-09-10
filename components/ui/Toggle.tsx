@@ -36,14 +36,14 @@ export function Toggle({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative mt-0.5 h-5 w-10 shrink-0 border transition-colors duration-200",
+          "relative mt-0.5 h-5 w-10 shrink-0 border transition-colors duration-150",
           checked ? "border-accent-2 bg-accent-2/25" : "border-line-2 bg-transparent",
         )}
       >
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-1/2 left-[3px] h-3.5 w-3.5 -translate-y-1/2 transition-transform duration-200 ease-[cubic-bezier(0.2,0.9,0.28,1)]",
+            "absolute top-1/2 left-[3px] h-3.5 w-3.5 -translate-y-1/2 transition-transform duration-150 ease-[cubic-bezier(0.2,0.9,0.28,1)]",
             checked ? "translate-x-[18px] bg-accent-2" : "bg-fg-3",
           )}
         />

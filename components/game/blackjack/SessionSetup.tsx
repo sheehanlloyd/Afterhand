@@ -9,6 +9,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import { Field, NumberField } from "@/components/ui/Field";
 import { Toggle } from "@/components/ui/Toggle";
 import { cn } from "@/lib/utils/cn";
+import { Kicker } from "@/components/ui/Panel";
 
 const PRESETS = [100, 500, 1000, 5000];
 const MIN_BANKROLL = 20;
@@ -88,211 +89,196 @@ export function SessionSetup({
 
         <hr className="rule-double mt-10" />
 
-        <div className="mt-8 space-y-9">
+        <div className="mt-8 space-y-8">
           <section>
-            <div className="section-head">
-              <span className="label pt-1">01</span>
-              <div>
-                <h2 className="text-[16px] font-semibold">Starting bankroll</h2>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {PRESETS.map((amount) => {
-                    const active = !custom && bankroll === amount;
-                    return (
-                      <button
-                        key={amount}
-                        type="button"
-                        onClick={() => {
-                          setCustom(false);
-                          setBankroll(amount);
-                        }}
-                        aria-pressed={active}
-                        className={cn(
-                          "tabular h-11 min-w-[5.5rem] border px-4 text-[14px] transition-colors",
-                          active
-                            ? "border-accent-2 bg-accent-2/10 text-fg"
-                            : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
-                        )}
-                      >
-                        {formatMoney(amount)}
-                      </button>
-                    );
-                  })}
+            <Kicker title="Starting bankroll" />
+            <div className="mt-4 flex flex-wrap gap-2">
+              {PRESETS.map((amount) => {
+                const active = !custom && bankroll === amount;
+                return (
                   <button
+                    key={amount}
                     type="button"
-                    onClick={() => setCustom(true)}
-                    aria-pressed={custom}
+                    onClick={() => {
+                      setCustom(false);
+                      setBankroll(amount);
+                    }}
+                    aria-pressed={active}
                     className={cn(
-                      "h-11 border px-4 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors",
-                      custom
+                      "tabular h-11 min-w-[5.5rem] border px-4 text-[14px] transition-colors",
+                      active
                         ? "border-accent-2 bg-accent-2/10 text-fg"
                         : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
                     )}
                   >
-                    Custom
+                    {formatMoney(amount)}
                   </button>
-                </div>
-
-                {custom ? (
-                  <div className="mt-4 max-w-[16rem]">
-                    <Field
-                      label="Custom amount"
-                      hint={`${MIN_BANKROLL} to ${MAX_BANKROLL.toLocaleString("en-US")}`}
-                    >
-                      <NumberField
-                        value={bankroll}
-                        onChange={setBankroll}
-                        min={MIN_BANKROLL}
-                        max={MAX_BANKROLL}
-                        step={10}
-                        prefix="$"
-                        ariaLabel="Custom starting bankroll"
-                      />
-                    </Field>
-                  </div>
-                ) : null}
-              </div>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setCustom(true)}
+                aria-pressed={custom}
+                className={cn(
+                  "h-11 border px-4 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors",
+                  custom
+                    ? "border-accent-2 bg-accent-2/10 text-fg"
+                    : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
+                )}
+              >
+                Custom
+              </button>
             </div>
+
+            {custom ? (
+              <div className="mt-4 max-w-[16rem]">
+                <Field
+                  label="Custom amount"
+                  hint={`${MIN_BANKROLL} to ${MAX_BANKROLL.toLocaleString("en-US")}`}
+                >
+                  <NumberField
+                    value={bankroll}
+                    onChange={setBankroll}
+                    min={MIN_BANKROLL}
+                    max={MAX_BANKROLL}
+                    step={10}
+                    prefix="$"
+                    ariaLabel="Custom starting bankroll"
+                  />
+                </Field>
+              </div>
+            ) : null}
           </section>
 
-          <section>
-            <div className="section-head">
-              <span className="label pt-1">02</span>
-              <div>
-                <h2 className="text-[16px] font-semibold">Mode</h2>
-                <div className="mt-4">
+          <section className="border-t border-line pt-8">
+            <Kicker title="Mode" />
+            <div className="mt-4">
+              <Segmented
+                label="Session mode"
+                value={mode}
+                onChange={setMode}
+                options={[
+                  { value: "play", label: "Play" },
+                  { value: "learn", label: "Learn" },
+                ]}
+              />
+            </div>
+            <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
+              {mode === "learn"
+                ? "A review opens after each hand, showing which decisions mattered and why. It never appears while the hand is live."
+                : "No review unless you ask for one. Your decisions are still recorded, so you can open a hand review at any point."}
+            </p>
+          </section>
+
+          <section className="border-t border-line pt-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <Kicker title="Table settings" />
+              <button
+                type="button"
+                onClick={() => setAdvanced((value) => !value)}
+                className="font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase transition-colors hover:text-fg"
+              >
+                {advanced ? "Hide rules" : "Change rules"}
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Field label="Minimum bet">
+                <NumberField
+                  value={rules.minBet}
+                  onChange={(value) => patch({ minBet: Math.max(1, Math.round(value)) })}
+                  min={1}
+                  prefix="$"
+                  ariaLabel="Table minimum bet"
+                />
+              </Field>
+              <Field label="Maximum bet">
+                <NumberField
+                  value={rules.maxBet}
+                  onChange={(value) => patch({ maxBet: Math.max(1, Math.round(value)) })}
+                  min={1}
+                  prefix="$"
+                  ariaLabel="Table maximum bet"
+                />
+              </Field>
+            </div>
+
+            {advanced ? (
+              <div className="mt-6 space-y-5 border-t border-line pt-6">
+                <Field label="Number of decks">
                   <Segmented
-                    label="Session mode"
-                    value={mode}
-                    onChange={setMode}
+                    label="Number of decks"
+                    size="sm"
+                    value={String(rules.decks)}
+                    onChange={(value) => patch({ decks: Number(value) })}
                     options={[
-                      { value: "play", label: "Play" },
-                      { value: "learn", label: "Learn" },
+                      { value: "1", label: "1" },
+                      { value: "2", label: "2" },
+                      { value: "4", label: "4" },
+                      { value: "6", label: "6" },
+                      { value: "8", label: "8" },
                     ]}
                   />
+                </Field>
+
+                <Field label="Dealer on soft 17">
+                  <Segmented
+                    label="Dealer on soft 17"
+                    size="sm"
+                    value={rules.dealerHitsSoft17 ? "hit" : "stand"}
+                    onChange={(value) => patch({ dealerHitsSoft17: value === "hit" })}
+                    options={[
+                      { value: "stand", label: "Stands" },
+                      { value: "hit", label: "Hits" },
+                    ]}
+                  />
+                </Field>
+
+                <Field label="Blackjack pays">
+                  <Segmented
+                    label="Blackjack payout"
+                    size="sm"
+                    value={rules.blackjackPayout === 1.5 ? "3:2" : "6:5"}
+                    onChange={(value) =>
+                      patch({ blackjackPayout: value === "3:2" ? 1.5 : 1.2 })
+                    }
+                    options={[
+                      { value: "3:2", label: "3 to 2" },
+                      { value: "6:5", label: "6 to 5" },
+                    ]}
+                  />
+                </Field>
+
+                <div className="divide-y divide-[var(--line)] border-t border-line">
+                  <Toggle
+                    label="Double after split"
+                    description="Allows doubling on a hand created by splitting."
+                    checked={rules.doubleAfterSplit}
+                    onChange={(value) => patch({ doubleAfterSplit: value })}
+                  />
+                  <Toggle
+                    label="Late surrender"
+                    description="Give up a hand after the deal for half the bet back."
+                    checked={rules.surrender === "late"}
+                    onChange={(value) => patch({ surrender: value ? "late" : "none" })}
+                  />
+                  <Toggle
+                    label="Insurance offered"
+                    description="Offer the side bet when the dealer shows an ace."
+                    checked={rules.insurance}
+                    onChange={(value) => patch({ insurance: value })}
+                  />
                 </div>
-                <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
-                  {mode === "learn"
-                    ? "A review opens after each hand, showing which decisions mattered and why. It never appears while the hand is live."
-                    : "No review unless you ask for one. Your decisions are still recorded, so you can open a hand review at any point."}
-                </p>
+
+                <button
+                  type="button"
+                  onClick={() => setRules(DEFAULT_RULES)}
+                  className="font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase transition-colors hover:text-fg"
+                >
+                  Reset to house rules
+                </button>
               </div>
-            </div>
-          </section>
-
-          <section>
-            <div className="section-head">
-              <span className="label pt-1">03</span>
-              <div>
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <h2 className="text-[16px] font-semibold">Table settings</h2>
-                  <button
-                    type="button"
-                    onClick={() => setAdvanced((value) => !value)}
-                    className="font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase transition-colors hover:text-fg"
-                  >
-                    {advanced ? "Hide rules" : "Change rules"}
-                  </button>
-                </div>
-
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <Field label="Minimum bet">
-                    <NumberField
-                      value={rules.minBet}
-                      onChange={(value) => patch({ minBet: Math.max(1, Math.round(value)) })}
-                      min={1}
-                      prefix="$"
-                      ariaLabel="Table minimum bet"
-                    />
-                  </Field>
-                  <Field label="Maximum bet">
-                    <NumberField
-                      value={rules.maxBet}
-                      onChange={(value) => patch({ maxBet: Math.max(1, Math.round(value)) })}
-                      min={1}
-                      prefix="$"
-                      ariaLabel="Table maximum bet"
-                    />
-                  </Field>
-                </div>
-
-                {advanced ? (
-                  <div className="mt-6 space-y-5 border-t border-line pt-6">
-                    <Field label="Number of decks">
-                      <Segmented
-                        label="Number of decks"
-                        size="sm"
-                        value={String(rules.decks)}
-                        onChange={(value) => patch({ decks: Number(value) })}
-                        options={[
-                          { value: "1", label: "1" },
-                          { value: "2", label: "2" },
-                          { value: "4", label: "4" },
-                          { value: "6", label: "6" },
-                          { value: "8", label: "8" },
-                        ]}
-                      />
-                    </Field>
-
-                    <Field label="Dealer on soft 17">
-                      <Segmented
-                        label="Dealer on soft 17"
-                        size="sm"
-                        value={rules.dealerHitsSoft17 ? "hit" : "stand"}
-                        onChange={(value) => patch({ dealerHitsSoft17: value === "hit" })}
-                        options={[
-                          { value: "stand", label: "Stands" },
-                          { value: "hit", label: "Hits" },
-                        ]}
-                      />
-                    </Field>
-
-                    <Field label="Blackjack pays">
-                      <Segmented
-                        label="Blackjack payout"
-                        size="sm"
-                        value={rules.blackjackPayout === 1.5 ? "3:2" : "6:5"}
-                        onChange={(value) =>
-                          patch({ blackjackPayout: value === "3:2" ? 1.5 : 1.2 })
-                        }
-                        options={[
-                          { value: "3:2", label: "3 to 2" },
-                          { value: "6:5", label: "6 to 5" },
-                        ]}
-                      />
-                    </Field>
-
-                    <div className="divide-y divide-[var(--line)] border-t border-line">
-                      <Toggle
-                        label="Double after split"
-                        description="Allows doubling on a hand created by splitting."
-                        checked={rules.doubleAfterSplit}
-                        onChange={(value) => patch({ doubleAfterSplit: value })}
-                      />
-                      <Toggle
-                        label="Late surrender"
-                        description="Give up a hand after the deal for half the bet back."
-                        checked={rules.surrender === "late"}
-                        onChange={(value) => patch({ surrender: value ? "late" : "none" })}
-                      />
-                      <Toggle
-                        label="Insurance offered"
-                        description="Offer the side bet when the dealer shows an ace."
-                        checked={rules.insurance}
-                        onChange={(value) => patch({ insurance: value })}
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setRules(DEFAULT_RULES)}
-                      className="font-mono text-[10px] tracking-[0.14em] text-fg-3 uppercase transition-colors hover:text-fg"
-                    >
-                      Reset to house rules
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
+            ) : null}
           </section>
         </div>
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { SectionHead } from "@/components/ui/Panel";
+import { InteriorHead } from "@/components/ui/Panel";
 import { LearningProfile } from "@/components/learn/LearningProfile";
 import { GameGlyph } from "@/components/marketing/GameGlyph";
 import { TUTORIALS } from "@/lib/content/tutorials";
@@ -30,7 +30,7 @@ export default function LearnPage() {
       </header>
 
       <section className="mt-16">
-        <SectionHead index="01" title="Five minute walkthroughs" />
+        <InteriorHead title="Five minute walkthroughs" />
         <div className="mt-8 grid sm:grid-cols-2">
           {GAMES.map((game) => {
             const tutorial = TUTORIALS[game.id];
@@ -42,7 +42,7 @@ export default function LearnPage() {
               >
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-accent-2 transition-transform duration-300 ease-out group-hover:scale-x-100"
+                  className="absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-accent-2 transition-transform duration-150 ease-out group-hover:scale-x-100"
                 />
                 <div className="flex items-center justify-between gap-4">
                   <GameGlyph
@@ -62,8 +62,7 @@ export default function LearnPage() {
       </section>
 
       <section className="mt-20">
-        <SectionHead
-          index="02"
+        <InteriorHead
           title="Your progress"
           note="Stored in this browser only. Nothing is sent anywhere."
         />
@@ -73,8 +72,8 @@ export default function LearnPage() {
       </section>
 
       <section className="mt-20">
-        <SectionHead index="03" title="How decisions are graded" />
-        <dl className="mt-8 divide-y divide-[var(--line)] border-y border-line">
+        <InteriorHead title="How decisions are graded" />
+        <ol className="mt-10 divide-y divide-[var(--line)] border-y border-line">
           {[
             ["Optimal", "The play matches basic strategy for the rules at your table."],
             [
@@ -86,16 +85,19 @@ export default function LearnPage() {
               "Major mistake",
               "A play that gives up a large amount, such as standing on a total that cannot bust or refusing to split aces.",
             ],
-          ].map(([term, definition]) => (
-            <div
+          ].map(([term, definition], index) => (
+            <li
               key={term}
-              className="grid gap-2 py-4 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:gap-6"
+              className="grid gap-3 py-5 sm:grid-cols-[4.5rem_minmax(0,10rem)_minmax(0,1fr)] sm:items-baseline sm:gap-6"
             >
-              <dt className="font-mono text-[10.5px] tracking-[0.12em] uppercase">{term}</dt>
-              <dd className="text-[14px] leading-relaxed text-fg-2">{definition}</dd>
-            </div>
+              <span className="display text-[clamp(1.7rem,3.2vw,2.15rem)] leading-none text-accent-2/40">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3 className="font-mono text-[10.5px] tracking-[0.12em] uppercase">{term}</h3>
+              <p className="text-[14px] leading-relaxed text-fg-2">{definition}</p>
+            </li>
           ))}
-        </dl>
+        </ol>
         <p className="mt-6 max-w-2xl text-[13.5px] leading-relaxed text-fg-2">
           Recommendations come from a fixed basic strategy chart that accounts for the number of
           decks, the dealer&apos;s soft 17 rule, whether doubling after a split is allowed, and whether
