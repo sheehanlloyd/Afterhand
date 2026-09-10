@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { RHYTHM } from "@/lib/motion/tokens";
 
 /**
  * The dealer, as a state machine.
@@ -50,13 +51,14 @@ const SHUFFLE_VARIANTS: ShuffleVariant[] = [
   "running-cuts",
 ];
 
-/** Roughly how long each shuffle takes to perform, in milliseconds. */
+/** Roughly how long each shuffle takes to perform, in milliseconds.
+ *  Keep in step with the durations in DealerRail SHUFFLES. */
 export const SHUFFLE_DURATION: Record<ShuffleVariant, number> = {
-  riffle: 720,
-  "table-riffle": 800,
-  strip: 660,
-  "running-cuts": 700,
-  wash: 950,
+  riffle: 580,
+  "table-riffle": 640,
+  strip: 520,
+  "running-cuts": 560,
+  wash: 760,
 };
 
 /**
@@ -121,13 +123,14 @@ export const useDealer = create<DealerStore>((set, get) => ({
     /* Two passes, the way a dealer actually does it, then the cut. */
     const first = SHUFFLE_DURATION[variant];
     const second = SHUFFLE_DURATION.riffle;
-    const cut = 480;
+    const prepare = RHYTHM.prepare;
+    const cut = RHYTHM.cut;
 
     set((current) => ({ state: "preparing", variant, beat: current.beat + 1 }));
     timers.push(
       setTimeout(() => {
         set((current) => ({ state: "shuffling", beat: current.beat + 1 }));
-      }, 240),
+      }, prepare),
     );
     timers.push(
       setTimeout(
@@ -138,7 +141,7 @@ export const useDealer = create<DealerStore>((set, get) => ({
             beat: current.beat + 1,
           }));
         },
-        240 + first,
+        prepare + first,
       ),
     );
     timers.push(
@@ -146,7 +149,7 @@ export const useDealer = create<DealerStore>((set, get) => ({
         () => {
           set((current) => ({ state: "cutting", beat: current.beat + 1 }));
         },
-        240 + first + second,
+        prepare + first + second,
       ),
     );
     timers.push(
@@ -154,11 +157,11 @@ export const useDealer = create<DealerStore>((set, get) => ({
         () => {
           get().enter("idle");
         },
-        240 + first + second + cut,
+        prepare + first + second + cut,
       ),
     );
 
-    return 240 + first + second + cut;
+    return prepare + first + second + cut;
   },
 
   reset: () => {

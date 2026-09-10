@@ -6,7 +6,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { Segmented } from "@/components/ui/Segmented";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { SectionHead } from "@/components/ui/Panel";
+import { Kicker } from "@/components/ui/Panel";
 import { Field, NumberField } from "@/components/ui/Field";
 import { STORAGE_KEYS, clearAllStores, removeStore, storageAvailable } from "@/lib/storage/storage";
 import { DEFAULT_PREFERENCES } from "@/lib/storage/preferences";
@@ -90,7 +90,7 @@ export function SettingsScreen() {
       ) : null}
 
       <section className="mt-14">
-        <SectionHead index="01" title="Table" />
+        <Kicker title="Table" />
         <div className="mt-6 divide-y divide-[var(--line)] border-y border-line">
           <Toggle
             label="Sound"
@@ -155,8 +155,8 @@ export function SettingsScreen() {
         </div>
       </section>
 
-      <section className="mt-16">
-        <SectionHead index="02" title="Blackjack house rules" />
+      <section className="mt-16 border-t border-line pt-10">
+        <Kicker title="Blackjack house rules" />
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           <Field label="Number of decks">
             <Segmented
@@ -226,8 +226,8 @@ export function SettingsScreen() {
         </button>
       </section>
 
-      <section className="mt-16">
-        <SectionHead index="03" title="Local data" />
+      <section className="mt-16 border-t border-line pt-10">
+        <Kicker title="Local data" />
         <p className="mt-6 max-w-xl text-[14px] leading-relaxed text-fg-2">
           Your preferences and learning progress stay on this device unless you clear your browser
           data. There is no account to recover and nothing to delete on a server.

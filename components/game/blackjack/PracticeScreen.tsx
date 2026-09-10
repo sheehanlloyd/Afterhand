@@ -26,11 +26,11 @@ import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Segmented } from "@/components/ui/Segmented";
 import { Stat } from "@/components/ui/Stat";
-import { SectionHead } from "@/components/ui/Panel";
+import { Kicker, InteriorHead } from "@/components/ui/Panel";
 import { formatPercent } from "@/lib/utils/format";
 import { playSound } from "@/lib/sound";
 import { cn } from "@/lib/utils/cn";
-import { DURATION, TRANSITION } from "@/lib/motion/tokens";
+import { DURATION, EASE, TRANSITION } from "@/lib/motion/tokens";
 
 interface Answer {
   scenario: PracticeScenario;
@@ -142,7 +142,7 @@ export function PracticeScreen() {
             className="h-full bg-accent"
             initial={{ width: "0%" }}
             animate={{ width: `${progress * 100}%` }}
-            transition={{ duration: DURATION.screen, ease: "easeOut" }}
+            transition={{ duration: DURATION.screen, ease: EASE.arrive }}
           />
         </div>
 
@@ -335,8 +335,8 @@ export function PracticeScreen() {
       </header>
 
       <div className="mt-12">
-        <SectionHead index="01" title="Choose a topic" />
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3">
+        <Kicker title="Choose a topic" />
+        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3">
           {PRACTICE_TOPICS.map((entry) => (
             <button
               key={entry.id}
@@ -366,9 +366,9 @@ export function PracticeScreen() {
         </div>
       </div>
 
-      <div className="mt-12">
-        <SectionHead index="02" title="Session size" />
-        <div className="mt-6 flex flex-wrap items-center gap-5">
+      <div className="mt-12 border-t border-line pt-10">
+        <Kicker title="Session size" />
+        <div className="mt-5 flex flex-wrap items-center gap-5">
           <Segmented
             label="Session size"
             value={String(size)}
@@ -385,8 +385,7 @@ export function PracticeScreen() {
       </div>
 
       <div className="mt-16">
-        <SectionHead
-          index="03"
+        <InteriorHead
           title="Strategy mastery"
           note="Every cell is the correct play. The fill shows how reliably you have made it."
         />

@@ -172,12 +172,12 @@ export function ChipFlightLayer({ children }: { children: ReactNode }) {
                 scale: [0.96, 1.03, 1],
                 opacity: 1,
               }}
-              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.12 } }}
+              exit={{ opacity: 0, scale: 0.9, transition: { duration: DURATION.tooltip } }}
               transition={{
                 delay: chip.delay,
                 duration: DURATION.chip,
                 ease: EASE.arrive,
-                opacity: { duration: 0.08, delay: chip.delay },
+                opacity: { duration: DURATION.press, delay: chip.delay },
                 y: { delay: chip.delay, duration: DURATION.chip, times: [0, 0.55, 1], ease: EASE.arrive },
               }}
             >

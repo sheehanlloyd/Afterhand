@@ -14,7 +14,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { Segmented } from "@/components/ui/Segmented";
-import { SectionHead } from "@/components/ui/Panel";
+import { Kicker } from "@/components/ui/Panel";
 import { Stat } from "@/components/ui/Stat";
 import { PokerTable } from "./PokerTable";
 import { PokerActionRail, PokerDealRail, PokerHandOverRail } from "./PokerRails";
@@ -71,55 +71,45 @@ export function PokerScreen() {
             <hr className="rule-double mt-10" />
 
             <section className="mt-8">
-              <div className="section-head">
-                <span className="label pt-1">01</span>
-                <div>
-                  <h2 className="text-[16px] font-semibold">Starting stack</h2>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {STACKS.map((amount) => (
-                      <button
-                        key={amount}
-                        type="button"
-                        onClick={() => setStack(amount)}
-                        aria-pressed={stack === amount}
-                        className={cn(
-                          "tabular h-11 min-w-[5.5rem] border px-4 text-[14px] transition-colors",
-                          stack === amount
-                            ? "border-accent-2 bg-accent-2/10 text-fg"
-                            : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
-                        )}
-                      >
-                        {formatMoney(amount)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <Kicker title="Starting stack" />
+              <div className="mt-4 flex flex-wrap gap-2">
+                {STACKS.map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => setStack(amount)}
+                    aria-pressed={stack === amount}
+                    className={cn(
+                      "tabular h-11 min-w-[5.5rem] border px-4 text-[14px] transition-colors",
+                      stack === amount
+                        ? "border-accent-2 bg-accent-2/10 text-fg"
+                        : "border-line text-fg-2 hover:border-line-2 hover:text-fg",
+                    )}
+                  >
+                    {formatMoney(amount)}
+                  </button>
+                ))}
               </div>
             </section>
 
-            <section className="mt-9">
-              <div className="section-head">
-                <span className="label pt-1">02</span>
-                <div>
-                  <h2 className="text-[16px] font-semibold">Mode</h2>
-                  <div className="mt-4">
-                    <Segmented
-                      label="Session mode"
-                      value={mode}
-                      onChange={setMode}
-                      options={[
-                        { value: "play", label: "Play" },
-                        { value: "learn", label: "Learn" },
-                      ]}
-                    />
-                  </div>
-                  <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
-                    {mode === "learn"
-                      ? "After each hand, a review walks through your decisions with the price the pot was offering and the equity your hand actually had."
-                      : "No review unless you ask for one. Nothing appears while a hand is live either way."}
-                  </p>
-                </div>
+            <section className="mt-9 border-t border-line pt-8">
+              <Kicker title="Mode" />
+              <div className="mt-4">
+                <Segmented
+                  label="Session mode"
+                  value={mode}
+                  onChange={setMode}
+                  options={[
+                    { value: "play", label: "Play" },
+                    { value: "learn", label: "Learn" },
+                  ]}
+                />
               </div>
+              <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-fg-2">
+                {mode === "learn"
+                  ? "After each hand, a review walks through your decisions with the price the pot was offering and the equity your hand actually had."
+                  : "No review unless you ask for one. Nothing appears while a hand is live either way."}
+              </p>
             </section>
 
             <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -214,7 +204,10 @@ export function PokerScreen() {
 
           {store.mode === "learn" && tally.total > 0 ? (
             <section className="mt-16">
-              <SectionHead index="A" title="Decision quality" />
+              <div className="flex items-baseline justify-between gap-4 border-b border-fg pb-3">
+                <h2 className="display text-[24px]">Decision quality</h2>
+                <span className="label">{tally.total} decisions</span>
+              </div>
               <div className="mt-8 grid grid-cols-2 gap-8 sm:grid-cols-4">
                 <Stat
                   label="Strong or reasonable"

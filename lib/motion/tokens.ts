@@ -35,6 +35,18 @@ export const DURATION = {
   screen: 0.2,
   /** One full revolution of the roulette wheel while it is settling. */
   wheelSpin: 0.7,
+  /** The ball's trip around the wheel before it drops. */
+  wheelBall: 1.35,
+  /** Squaring the deck or a short dealer gesture. */
+  prepare: 0.22,
+  /** A rare idle flourish. Short enough not to stall the next hand. */
+  flourish: 0.62,
+  /** Ambient felt breathing. Long on purpose. */
+  breath: 4.4,
+  /** Status marker pulse while the dealer is busy. */
+  pulse: 2.2,
+  /** The lamp over a table. Slow enough to read as light, not as a screensaver. */
+  ambient: 9,
 } as const;
 
 /**
@@ -85,6 +97,16 @@ export const RHYTHM = {
   betweenCollect: 45,
   /** How long a card takes to physically settle once it has arrived. */
   landing: 80,
+  /** Squaring the deck before a shuffle starts. */
+  prepare: 180,
+  /** The cut after a shuffle, in milliseconds. Keep in step with CUT in DealerRail. */
+  cut: 380,
+  /** A burn card sits on the felt before it is swept. */
+  burnHold: 160,
+  /** Time from a burn appearing to it being gone. */
+  burnSweep: 520,
+  /** Between cards in a homepage film, which has less time than a real deal. */
+  betweenFilmCards: 55,
 } as const;
 
 /** How far a card's flight is allowed to smear, as a fraction of its width. */

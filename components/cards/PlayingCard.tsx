@@ -361,7 +361,7 @@ function CardBody({
               delay: wait,
               duration,
               ease,
-              opacity: { delay: wait, duration: 0.08 },
+              opacity: { delay: wait, duration: DURATION.press },
               scale: {
                 delay: wait,
                 ...SPRING.settle,
@@ -423,7 +423,7 @@ function CardBody({
               className="h-full w-full"
               initial={inert || !from ? false : { rotateX: 13 }}
               animate={{ rotateX: 0 }}
-              transition={{ delay: wait, duration: duration + 0.06, ease }}
+              transition={{ delay: wait, duration, ease }}
               whileHover={interactive && !inert ? { y: -4, scale: 1.02 } : undefined}
               style={{ transformStyle: "preserve-3d" }}
             >
